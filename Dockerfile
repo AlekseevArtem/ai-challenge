@@ -1,8 +1,10 @@
 # 1. Builder stage
 FROM gradle:8.2-jdk17 AS builder
 WORKDIR /app
+COPY build.gradle.kts settings.gradle.kts ./
+RUN ./gradlew build --dry-run || true
 COPY . .
-RUN gradle browserProductionWebpack --no-daemon
+RUN ./gradlew browserProductionWebpack --no-daemon --max-workers=1
 
 # 2. Runner stage
 FROM nginx:stable
