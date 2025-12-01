@@ -2,7 +2,7 @@
 FROM gradle:8.2-jdk17 AS builder
 WORKDIR /app
 COPY . .
-RUN gradle jsBrowserProductionWebpack
+RUN gradle browserProductionWebpack --no-daemon
 
 # 2. Runner stage
 FROM nginx:stable
