@@ -94,43 +94,60 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Input area */
+/* Основная область ввода чата */
 .chat-input {
     height: 55px;
-    width: 100vw;
+    width: 100%;
     background: linear-gradient(135deg, #6a00ff, #ab3cff);
     padding: 10px;
-    display: flex;
-    flex-shrink: 0;
+    display: flex;                 /* Включаем Flexbox */
+    align-items: center;           /* Центрирование по вертикали */
     position: absolute;
     bottom: 0;
-    align-items: center;
 }
 
+/* Поле ввода */
 .chat-input input {
-    flex-grow: 1;
-    padding: 10px 12px;
+    flex-grow: 1;                  /* Растягиваем поле ввода на всю ширину */
+    padding: 10px 16px;
     border-radius: 20px;
     border: none;
     outline: none;
     font-size: 14px;
+    background-color: white; /* Прозрачность фона */
+    color: #3c0498;
+    box-shadow: inset 0 0 0 2px rgba(8, 37, 236, 0.38); /* Граница */
 }
 
-.send-btn {
-    margin-left: 8px;
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
+.chat-input input::placeholder {
+    color: rgb(41, 0, 66);
+}
+
+/* Кнопка отправки */
+.chat-input button {
+    width: 40px;                   /* Ширина кнопки */
+    height: 40px;                  /* Высота кнопки */
+    border-radius: 50%;            /* Идеально круглая форма */
     border: none;
-    background: white;
+    background-color: white;
     color: #7a00ff;
     font-size: 16px;
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-left: 8px;              /* Минимальное расстояние слева */
+    margin-right: 20px;
+    transition: all 0.2s ease-in-out;
 }
 
-.send-btn:hover {
-    background: #f2e7ff;
+/* Иконка внутри кнопки */
+.chat-input button i {
+    font-size: 18px;           /* Размер иконки */
+    color: #7a00ff;            /* Фиолетовый цвет иконки */
+}
+
+/* Эффект при наведении */
+.chat-input button:hover {
+    background-color: #f2e7ff;
 }
