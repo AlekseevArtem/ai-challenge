@@ -5,7 +5,7 @@ const messages = document.getElementById("messages");
 function addMessage(text, type = "user") {
     const div = document.createElement("div");
     div.classList.add("message", type);
-    div.textContent = text;
+    div.innerHTML = text;
     messages.appendChild(div);
     messages.scrollTop = messages.scrollHeight;
 }
@@ -30,7 +30,7 @@ async function sendMessageToBot(text) {
     });
 
     const data = await res.json();
-    return data.bot;
+    return data.bot.replace(/\\n/g, "<br>");
 }
 
 input.addEventListener("keypress", e => {

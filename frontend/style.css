@@ -1,17 +1,16 @@
 /* Background */
 body {
     margin: 0;
-    background: #efefef;
+    background: white;
     width: 100vw;
-    height: 100%;
+    height: 100vh;
     font-family: "Segoe UI", sans-serif;
 }
 
 /* Chat container */
 .chat-wrapper {
     width: 100vw;
-    height: 100%;
-    background: white;
+    height: 100vh;
     display: flex;
     flex-direction: column;
 }
@@ -50,13 +49,12 @@ body {
 
 /* Chat body */
 .chat-messages {
-    height: 100%;
     flex: 1;
-    padding: 20px;        /* увеличил отступы */
+    padding: 20px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 8px;            /* расстояние между сообщениями */
+    gap: 8px;
     scroll-behavior: smooth;
 }
 
@@ -70,64 +68,59 @@ body {
     line-height: 1.4;
 }
 
-/* User message (right, purple gradient) */
 .message.user {
     align-self: flex-end;
-    margin-right: 10px;    /* от края */
+    margin-right: 10px;
     background: linear-gradient(135deg, #7b2fff, #d06bff);
     color: white;
     border-bottom-right-radius: 4px;
 }
 
-/* Bot message (left, gray bubble) */
 .message.bot {
     align-self: flex-start;
-    margin-left: 10px;     /* от края */
+    margin-left: 10px;
     background: #e5e5e5;
     color: #333;
     border-bottom-left-radius: 4px;
 }
 
-/* Fade animation */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Основная область ввода чата */
+/* Chat input */
 .chat-input {
     height: 55px;
     width: 100%;
     background: linear-gradient(135deg, #6a00ff, #ab3cff);
     padding: 10px;
-    display: flex;                 /* Включаем Flexbox */
-    align-items: center;           /* Центрирование по вертикали */
-    position: absolute;
-    bottom: 0;
+    display: flex;
+    align-items: center;
 }
 
-/* Поле ввода */
+/* Input field */
 .chat-input input {
-    flex-grow: 1;                  /* Растягиваем поле ввода на всю ширину */
+    flex-grow: 1;
     padding: 10px 16px;
     border-radius: 20px;
     border: none;
     outline: none;
     font-size: 14px;
-    background-color: white; /* Прозрачность фона */
+    background-color: white;
     color: #3c0498;
-    box-shadow: inset 0 0 0 2px rgba(8, 37, 236, 0.38); /* Граница */
+    box-shadow: inset 0 0 0 2px rgba(8, 37, 236, 0.38);
 }
 
 .chat-input input::placeholder {
     color: rgb(41, 0, 66);
 }
 
-/* Кнопка отправки */
+/* Send button */
 .chat-input button {
-    width: 40px;                   /* Ширина кнопки */
-    height: 40px;                  /* Высота кнопки */
-    border-radius: 50%;            /* Идеально круглая форма */
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
     border: none;
     background-color: white;
     color: #7a00ff;
@@ -136,18 +129,16 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-left: 8px;              /* Минимальное расстояние слева */
+    margin-left: 8px;
     margin-right: 20px;
     transition: all 0.2s ease-in-out;
 }
 
-/* Иконка внутри кнопки */
 .chat-input button i {
-    font-size: 18px;           /* Размер иконки */
-    color: #7a00ff;            /* Фиолетовый цвет иконки */
+    font-size: 18px;
+    color: #7a00ff;
 }
 
-/* Эффект при наведении */
 .chat-input button:hover {
     background-color: #f2e7ff;
 }

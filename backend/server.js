@@ -2,7 +2,7 @@ const express = require("express");
 const axios = require("axios");
 const fs = require("fs");
 const cors = require("cors");
-const { randomUUID } = require('crypto');
+const {randomUUID} = require('crypto');
 
 const app = express();
 app.use(express.json());
@@ -20,6 +20,8 @@ const CLIENT_SECRET = process.env.GIGACHAT_CLIENT_SECRET;
 
 let cachedToken = null;
 let tokenExpires = 0;
+
+let dialogHistory = [];
 
 // Получение токена
 async function getToken() {
@@ -53,29 +55,51 @@ async function getToken() {
     return cachedToken;
 }
 
-// Маршрут для отправки текста в GigaChat
 app.post("/chat", async (req, res) => {
     try {
-        const { message } = req.body;
+        const {message} = req.body;
+
+        if (!message) {
+            return res.status(400).json({error: "message is required"});
+        }
+
+        // Добавляем новое сообщение пользователя
+        dialogHistory.push({
+            role: "user",
+            content: message
+        });
 
         const token = await getToken();
 
-        console.error('Token:', token);
+        // Добавляем system-промпт только в начале!
+        const systemMessage = {
+            role: "system",
+
+            content: ""
+
+                + " Представься как опытный фитнес-тренер, заинтересованный в успехе каждого клиента. Веди активный диалог, задавая точные вопросы которые помогут тебе достичь цели. Ты можешь задать несколько вопросов, но только такие которые можно объединить в один контекст. Диалог должен основываться на ответах клиента, позволяя постепенно раскрывать его потребности и ожидания."
+
+                + " Вопросы должны быть ориентированы на достижение основной цели. В первую очередь выполни промежуточные цели, при их выполнении сохраняй полученную информацию и в дальнейшем используй полученную информацию для достижения основной цели. Выполненные цели больше не надо выполнять. Твои вопросы формируются предельно ясно и точно. Дополняй список промежуточный целей по ходу диалога с клиентом, на основе его пожеланий"
+
+                + " Обязательно обращай внимание если клиент что-то расписывает подробно"
+
+                + " Основные цели: составить индивидуальную программу тренировок, подборать оптимальную схемы питания и дать рекомендации по пищевым добавкам"
+
+                + " Промежуточные цели: Узнай имя, узнай возраст, вес и рост клиента, узнай есть ли у клиента лишний вес, узнай какие изменения в теле хочет клиент, узнай есть ли какие-то дополнительные пожелания"
+
+                + " Когда ты получишь достаточно информации для выполнения основных целей тогда выполни основный цели и после этого заверши встречу, выразив благодарность за сотрудничество и поинтересовавшись степенью удовлетворённости клиента консультацией. Завершай встречу полностью, это значит если тебе что-то ответит клиент после того как ты завершишь встречу ты будешь молчать и ничего не отвечать. Если клиент не удовлетворен, спроси уточняющие вопросы и выясни его пожелания, пока не достигнешь достаточной ясности для выполнения основных целей."
+        };
+
+        const messagesToSend = [
+            systemMessage,
+            ...dialogHistory
+        ];
 
         const response = await axios.post(
             "https://gigachat.devices.sberbank.ru/api/v1/chat/completions",
             {
                 model: "GigaChat",
-                messages: [
-                    {
-                        role: "system",
-                        content: "Ты отвечаешь только в формате JSON {\"answer\": \"text\"}"
-                    },
-                    {
-                        role: "user",
-                        content: message
-                    }
-                ]
+                messages: messagesToSend
             },
             {
                 headers: {
@@ -86,13 +110,19 @@ app.post("/chat", async (req, res) => {
             }
         );
 
-        console.log('Ответ:', response.data.choices[0].message.content);
+        const output = response.data.choices[0].message.content;
 
-        // Парсим ответ от GigaChat
-        const parsedResponse = JSON.parse(response.data.choices[0].message.content);
-        const answer = parsedResponse.answer;
+        const escapedAnswer = JSON.stringify(output).slice(1, -1);
 
-        res.json({ bot: answer }); // Возвращаем ответ
+        console.log('Ответ:', output);
+        console.log('Отформатированный ответ:', escapedAnswer);
+
+        dialogHistory.push({
+            role: "assistant",
+            content: escapedAnswer
+        });
+
+        res.json({ bot: escapedAnswer }); // Возвращаем ответ
 
     } catch (err) {
         let logData = {};
@@ -105,16 +135,26 @@ app.post("/chat", async (req, res) => {
                 statusText: err.response.statusText,
             };
         } else {
-            logData = { message: err.message };
+            logData = {message: err.message};
         }
 
-        console.error('Error:', logData);
+        console.error("Error:", logData);
+
         res.status(logData.statusCode || 500).json({
             error: "GigaChat API error",
             details: logData
         });
     }
 });
+
+function isJSON(str) {
+    try {
+        JSON.parse(str);
+        return true;
+    } catch {
+        return false;
+    }
+}
 
 // Запускаем сервер
 app.listen(3000, () => console.log("GigaChat proxy running"));
