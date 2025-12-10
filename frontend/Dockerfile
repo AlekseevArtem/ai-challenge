@@ -1,4 +1,4 @@
-FROM nginx:stable
+FROM nginx:1.25-alpine
 
 # Копируем все файлы проекта в стандартную папку Nginx
 COPY .. /usr/share/nginx/html/
