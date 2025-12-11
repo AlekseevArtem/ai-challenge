@@ -3,6 +3,11 @@ const axios = require("axios");
 const cors = require("cors");
 require("dotenv").config();
 
+// Импорт сервисов
+const historyService = require("./services/historyService");
+const SummarizationService = require("./services/summarizationService");
+const { calculateCost, formatCost } = require("./utils/pricing");
+
 // Конфигурация
 const CONFIG = {
     PORT: process.env.PORT || 3000,
@@ -23,6 +28,13 @@ if (!CLAUDE_API_KEY) {
     console.error("Ошибка: ANTHROPIC_API_KEY не установлен в .env файле!");
     process.exit(1);
 }
+
+// Инициализация сервисов
+const summarizationService = new SummarizationService(
+    CLAUDE_API_KEY,
+    CONFIG.CLAUDE_API_URL,
+    CONFIG.ANTHROPIC_VERSION
+);
 
 // Инициализация Express
 const app = express();
@@ -56,9 +68,14 @@ function validateTemperature(temperature) {
 
 // Отправка запроса к Claude API
 async function sendMessageToClaude(message) {
+    // Получаем историю сообщений для API
+    const historyMessages = await historyService.getMessagesForApi();
+
+    // Добавляем новое сообщение пользователя
     const requestBody = {
         model: CONFIG.CLAUDE_MODEL,
         messages: [
+            ...historyMessages,
             {
                 role: "user",
                 content: message
@@ -72,7 +89,11 @@ async function sendMessageToClaude(message) {
         requestBody.temperature = state.temperature;
     }
 
-    console.log("Запрос к Claude API:", JSON.stringify(requestBody, null, 2));
+    console.log("Запрос к Claude API:", JSON.stringify({
+        model: requestBody.model,
+        messagesCount: requestBody.messages.length,
+        temperature: requestBody.temperature
+    }, null, 2));
 
     try {
         const response = await axios.post(
@@ -97,6 +118,12 @@ async function sendMessageToClaude(message) {
             throw new Error("Некорректная структура ответа от Claude API");
         }
 
+        // Сохраняем сообщение в историю с полным ответом API
+        const savedMessage = await historyService.addMessage(message, response.data);
+
+        // Проверяем, нужно ли сжать историю
+        await summarizationService.autoSummarize(historyService);
+
         // Подсчёт и логирование токенов
         if (usage) {
             const inputTokens = usage.input_tokens || 0;
@@ -113,7 +140,9 @@ async function sendMessageToClaude(message) {
 
         return {
             text: output,
-            usage: usage || { input_tokens: 0, output_tokens: 0 }
+            usage: usage || { input_tokens: 0, output_tokens: 0 },
+            messageId: savedMessage.id, // ID сохраненного сообщения
+            fullResponse: response.data // Полный ответ API
         };
     } catch (error) {
         console.error("Ошибка Claude API:", error.response?.data || error.message);
@@ -139,7 +168,14 @@ app.post("/chat", async (req, res) => {
         console.log("Ответ отправлен клиенту");
         res.json({
             bot: result.text,
-            usage: result.usage
+            usage: result.usage,
+            messageId: result.messageId,
+            model: result.fullResponse.model,
+            cost: calculateCost(
+                result.fullResponse.model,
+                result.usage.input_tokens,
+                result.usage.output_tokens
+            )
         });
     } catch (err) {
         console.error("Ошибка обработки запроса:", err.response?.data || err.message);
@@ -199,9 +235,66 @@ app.get("/token-stats", (req, res) => {
     });
 });
 
+// Роут для получения истории диалога
+app.get("/history", async (req, res) => {
+    try {
+        const history = await historyService.getHistory();
+        res.json({ history });
+    } catch (err) {
+        console.error("Ошибка получения истории:", err);
+        res.status(500).json({ error: "Не удалось получить историю" });
+    }
+});
+
+// Роут для получения информации о конкретном сообщении
+app.get("/message/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const message = await historyService.getMessageById(id);
+
+        if (!message) {
+            return res.status(404).json({ error: "Сообщение не найдено" });
+        }
+
+        // Форматируем данные для фронтенда
+        const formattedCost = formatCost(message.cost);
+
+        res.json({
+            id: message.id,
+            timestamp: message.timestamp,
+            type: message.type,
+            user: message.user,
+            bot: message.bot,
+            model: message.api?.model,
+            usage: message.api?.usage,
+            cost: message.cost,
+            formattedCost
+        });
+    } catch (err) {
+        console.error("Ошибка получения сообщения:", err);
+        res.status(500).json({ error: "Не удалось получить сообщение" });
+    }
+});
+
+// Роут для очистки истории (для тестирования)
+app.delete("/history", async (req, res) => {
+    try {
+        await historyService.clear();
+        res.json({ ok: true, message: "История очищена" });
+    } catch (err) {
+        console.error("Ошибка очистки истории:", err);
+        res.status(500).json({ error: "Не удалось очистить историю" });
+    }
+});
+
 // Запуск сервера
-app.listen(CONFIG.PORT, () => {
+app.listen(CONFIG.PORT, async () => {
     console.log(`🚀 Claude proxy запущен на порту ${CONFIG.PORT}`);
     console.log(`📝 Модель: ${CONFIG.CLAUDE_MODEL}`);
     console.log(`🌡️  Температура: ${state.temperature ?? "по умолчанию"}`);
+
+    // Инициализируем историю при старте
+    await historyService.initialize();
+    const messageCount = await historyService.getRegularMessagesCount();
+    console.log(`📚 Сообщений в истории: ${messageCount}`);
 });
