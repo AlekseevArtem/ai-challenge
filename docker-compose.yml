@@ -1,0 +1,67 @@
+services:
+
+  # Ktor Backend Server
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    image: myapplication-server:latest
+    container_name: myapplication-server
+    ports:
+      - "8081:8080"
+    restart: unless-stopped
+    env_file:
+      - claude-api-key.env
+    volumes:
+      - chat-data:/home/appuser
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - app-network
+    labels:
+      - "com.myapplication.description=Ktor Backend Server"
+      - "com.myapplication.version=1.0.0"
+
+  # Kotlin/Wasm Web Application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    image: myapplication-web:latest
+    container_name: myapplication-web
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    environment:
+      - NGINX_HOST=localhost
+      - NGINX_PORT=80
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - app-network
+    labels:
+      - "com.myapplication.description=Kotlin Multiplatform Web Application"
+      - "com.myapplication.version=1.0.0"
+    depends_on:
+      server:
+        condition: service_healthy
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  chat-data:
+    driver: local
