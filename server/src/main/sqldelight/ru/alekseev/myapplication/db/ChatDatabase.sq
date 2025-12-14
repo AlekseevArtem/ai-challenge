@@ -1,0 +1,58 @@
+-- Table for storing chat messages with full Claude API response
+CREATE TABLE IF NOT EXISTS Message (
+    id TEXT PRIMARY KEY NOT NULL,
+    user_message TEXT NOT NULL,
+    assistant_message TEXT NOT NULL,
+    claude_response_json TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    response_time_ms INTEGER NOT NULL,
+    is_compressed INTEGER NOT NULL DEFAULT 0,
+    user_id TEXT NOT NULL DEFAULT 'default_user'
+);
+
+-- Table for storing summary objects
+CREATE TABLE IF NOT EXISTS Summary (
+    id TEXT PRIMARY KEY NOT NULL,
+    summary_text TEXT NOT NULL,
+    messages_count INTEGER NOT NULL,
+    timestamp INTEGER NOT NULL,
+    position INTEGER NOT NULL,
+    user_id TEXT NOT NULL DEFAULT 'default_user'
+);
+
+-- Queries for Message table
+insertMessage:
+INSERT INTO Message (id, user_message, assistant_message, claude_response_json, timestamp, response_time_ms, is_compressed, user_id)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+getAllMessages:
+SELECT * FROM Message WHERE user_id = ? ORDER BY timestamp ASC;
+
+getUncompressedMessages:
+SELECT * FROM Message WHERE user_id = ? AND is_compressed = 0 ORDER BY timestamp ASC;
+
+getUncompressedMessagesCount:
+SELECT COUNT(*) FROM Message WHERE user_id = ? AND is_compressed = 0;
+
+markMessagesAsCompressed:
+UPDATE Message SET is_compressed = 1 WHERE id IN ?;
+
+getMessageById:
+SELECT * FROM Message WHERE id = ?;
+
+deleteAllMessages:
+DELETE FROM Message WHERE user_id = ?;
+
+-- Queries for Summary table
+insertSummary:
+INSERT INTO Summary (id, summary_text, messages_count, timestamp, position, user_id)
+VALUES (?, ?, ?, ?, ?, ?);
+
+getAllSummaries:
+SELECT * FROM Summary WHERE user_id = ? ORDER BY position ASC;
+
+deleteSummary:
+DELETE FROM Summary WHERE id = ?;
+
+deleteAllSummaries:
+DELETE FROM Summary WHERE user_id = ?;

@@ -1,0 +1,50 @@
+# Stage 1: Build the Ktor server application
+FROM gradle:8.10-jdk17 AS builder
+
+WORKDIR /app
+
+# Copy Gradle configuration files
+COPY gradle gradle
+COPY gradlew .
+COPY gradlew.bat .
+COPY gradle.properties .
+COPY settings.gradle.kts .
+COPY build.gradle.kts .
+COPY gradle/libs.versions.toml gradle/libs.versions.toml
+
+# Create gradle home and set permissions
+RUN mkdir -p /home/gradle/.gradle && chown -R gradle:gradle /home/gradle/.gradle
+
+# Download dependencies (caching layer)
+RUN ./gradlew dependencies --no-daemon || true
+
+# Copy source code
+COPY shared shared
+COPY server server
+
+# Build the server application
+RUN ./gradlew :server:installDist --no-daemon --stacktrace
+
+# Stage 2: Run the application
+FROM eclipse-temurin:17-jre-jammy
+
+WORKDIR /app
+
+# Copy the built application from builder
+COPY --from=builder /app/server/build/install/server /app
+
+# Create a non-root user and home directory
+RUN groupadd -r appgroup && useradd -r -g appgroup -m -d /home/appuser appuser && \
+    mkdir -p /home/appuser && \
+    chown -R appuser:appgroup /home/appuser
+USER appuser
+
+# Expose the server port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:8080/ || exit 1
+
+# Run the server
+CMD ["/app/bin/server"]
