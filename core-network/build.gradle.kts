@@ -12,7 +12,7 @@ kotlin {
 
     androidTarget {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget.set(JvmTarget.fromTarget(libs.versions.jvmTarget.get()))
         }
     }
 
@@ -42,35 +42,35 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 // Ktor Client Engine
-                implementation("io.ktor:ktor-client-android:3.3.3")
+                implementation(libs.ktor.client.android)
             }
         }
 
         val jvmMain by getting {
             dependencies {
                 // Ktor Client Engine
-                implementation("io.ktor:ktor-client-cio:3.3.3")
+                implementation(libs.ktor.client.cio)
             }
         }
 
         val iosMain by getting {
             dependencies {
                 // Ktor Client Engine
-                implementation("io.ktor:ktor-client-darwin:3.3.3")
+                implementation(libs.ktor.client.darwin)
             }
         }
 
         val jsMain by getting {
             dependencies {
                 // Ktor Client Engine
-                implementation("io.ktor:ktor-client-js:3.3.3")
+                implementation(libs.ktor.client.js)
             }
         }
 
         val wasmJsMain by getting {
             dependencies {
                 // Ktor Client Engine
-                implementation("io.ktor:ktor-client-js:3.3.3")
+                implementation(libs.ktor.client.js)
             }
         }
     }

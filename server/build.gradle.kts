@@ -17,23 +17,24 @@ application {
 
 dependencies {
     implementation(projects.shared)
+    implementation(projects.coreCommon)
     implementation(libs.logback)
 
     // Ktor Server
     implementation(libs.ktor.serverCore)
     implementation(libs.ktor.serverNetty)
-    implementation("io.ktor:ktor-server-websockets-jvm:3.3.3")
-    implementation("io.ktor:ktor-server-content-negotiation-jvm:3.3.3")
-    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:3.3.3")
-    implementation("io.ktor:ktor-server-cors-jvm:3.3.3")
-    implementation("io.ktor:ktor-server-call-logging-jvm:3.3.3")
-    implementation("io.ktor:ktor-server-double-receive-jvm:3.3.3")
+    implementation(libs.ktor.server.websockets)
+    implementation(libs.ktor.server.contentNegotiation)
+    implementation(libs.ktor.serialization.json)
+    implementation(libs.ktor.server.cors)
+    implementation(libs.ktor.server.callLogging)
+    implementation(libs.ktor.server.doubleReceive)
 
     // Ktor Client
-    implementation("io.ktor:ktor-client-core-jvm:3.3.3")
-    implementation("io.ktor:ktor-client-cio-jvm:3.3.3")
-    implementation("io.ktor:ktor-client-content-negotiation-jvm:3.3.3")
-    implementation("io.ktor:ktor-client-logging-jvm:3.3.3")
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.contentNegotiation)
+    implementation(libs.ktor.client.logging)
 
     // Serialization
     implementation(libs.serialization.json)
@@ -50,9 +51,9 @@ dependencies {
     implementation(libs.koin.ktor)
 
     // Google Calendar API
-    implementation("com.google.api-client:google-api-client:2.7.0")
-    implementation("com.google.oauth-client:google-oauth-client-jetty:1.36.0")
-    implementation("com.google.apis:google-api-services-calendar:v3-rev20220715-2.0.0")
+    implementation(libs.google.api.client)
+    implementation(libs.google.oauth.client)
+    implementation(libs.google.api.calendar)
 
     // Tests
     testImplementation(libs.ktor.serverTestHost)
@@ -63,7 +64,6 @@ sqldelight {
     databases {
         create("ChatDatabase") {
             packageName.set("ru.alekseev.myapplication.db")
-            dialect("app.cash.sqldelight:sqlite-3-38-dialect:2.0.2")
         }
     }
 }

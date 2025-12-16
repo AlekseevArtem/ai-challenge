@@ -16,7 +16,7 @@ kotlin {
 
     androidTarget {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.fromTarget(libs.versions.jvmTarget.get()))
         }
     }
     
@@ -112,8 +112,9 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        val jvmTargetVersion = libs.versions.jvmTarget.get().toInt()
+        sourceCompatibility = JavaVersion.toVersion(jvmTargetVersion)
+        targetCompatibility = JavaVersion.toVersion(jvmTargetVersion)
     }
 }
 

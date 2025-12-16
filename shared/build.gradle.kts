@@ -12,7 +12,7 @@ kotlin {
 
     androidTarget {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.fromTarget(libs.versions.jvmTarget.get()))
         }
     }
 
@@ -42,6 +42,8 @@ kotlin {
     
     sourceSets {
         commonMain.dependencies {
+            // Core Common
+            implementation(projects.coreCommon)
 
             // Decompose
             api(libs.decompose.decompose)
@@ -52,19 +54,46 @@ kotlin {
 
             //DateTime
             implementation(libs.kotlinx.datetime)
+
+            // Ktor Client
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.websockets)
+            implementation(libs.ktor.client.contentNegotiation)
+            implementation(libs.ktor.serialization.json)
         }
 
-        val iosArm64Main by getting {
+        val androidMain by getting {
             dependencies {
-                api(libs.decompose.decompose)
-                api(libs.essenty.lifecycle)
+                // Ktor Client Engine
+                implementation(libs.ktor.client.android)
             }
         }
 
-        val iosSimulatorArm64Main by getting {
+        val jvmMain by getting {
             dependencies {
-                api(libs.decompose.decompose)
-                api(libs.essenty.lifecycle)
+                // Ktor Client Engine
+                implementation(libs.ktor.client.cio)
+            }
+        }
+
+        val iosMain by getting {
+            dependencies {
+                // Ktor Client Engine
+                implementation(libs.ktor.client.darwin)
+            }
+        }
+
+        val jsMain by getting {
+            dependencies {
+                // Ktor Client Engine
+                implementation(libs.ktor.client.js)
+            }
+        }
+
+        val wasmJsMain by getting {
+            dependencies {
+                // Ktor Client Engine
+                implementation(libs.ktor.client.js)
             }
         }
 
@@ -77,11 +106,14 @@ kotlin {
 android {
     namespace = "ru.alekseev.myapplication.shared"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
+
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+
+    compileOptions {
+        val jvmTargetVersion = libs.versions.jvmTarget.get().toInt()
+        sourceCompatibility = JavaVersion.toVersion(jvmTargetVersion)
+        targetCompatibility = JavaVersion.toVersion(jvmTargetVersion)
     }
 }

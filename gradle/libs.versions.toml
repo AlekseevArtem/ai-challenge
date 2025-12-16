@@ -4,7 +4,7 @@ android-compileSdk = "36"
 android-minSdk = "24"
 android-targetSdk = "36"
 jvmTarget = "17"
-androidx-activity = "1.12.0"
+androidx-activity = "1.12.1"
 androidx-appcompat = "1.7.1"
 androidx-core = "1.17.0"
 androidx-espresso = "3.7.0"
@@ -24,7 +24,11 @@ flowmvi = "3.2.1"
 koin = "4.1.1"
 compose-materialIcons = "1.7.3"
 kotlinx-datetime = "0.7.1"
-sqldelight = "2.0.2"
+sqldelight = "2.2.1"
+google-api-client = "2.8.1"
+google-oauth-client = "1.39.0"
+google-api-calendar = "v3-rev20220715-2.0.0"
+logback-mcp = "1.5.22"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -59,6 +63,24 @@ kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime",
 sqldelight-driver-sqlite = { group = "app.cash.sqldelight", name = "sqlite-driver", version.ref = "sqldelight" }
 sqldelight-coroutinesExtensions = { group = "app.cash.sqldelight", name = "coroutines-extensions", version.ref = "sqldelight" }
 koin-ktor = { group = "io.insert-koin", name = "koin-ktor", version.ref = "koin" }
+ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-client-websockets = { group = "io.ktor", name = "ktor-client-websockets", version.ref = "ktor" }
+ktor-client-contentNegotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version.ref = "ktor" }
+ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
+ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
+ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }
+ktor-client-js = { group = "io.ktor", name = "ktor-client-js", version.ref = "ktor" }
+ktor-serialization-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-server-websockets = { group = "io.ktor", name = "ktor-server-websockets-jvm", version.ref = "ktor" }
+ktor-server-contentNegotiation = { group = "io.ktor", name = "ktor-server-content-negotiation-jvm", version.ref = "ktor" }
+ktor-server-cors = { group = "io.ktor", name = "ktor-server-cors-jvm", version.ref = "ktor" }
+ktor-server-callLogging = { group = "io.ktor", name = "ktor-server-call-logging-jvm", version.ref = "ktor" }
+ktor-server-doubleReceive = { group = "io.ktor", name = "ktor-server-double-receive-jvm", version.ref = "ktor" }
+google-api-client = { group = "com.google.api-client", name = "google-api-client", version.ref = "google-api-client" }
+google-oauth-client = { group = "com.google.oauth-client", name = "google-oauth-client-jetty", version.ref = "google-oauth-client" }
+google-api-calendar = { group = "com.google.apis", name = "google-api-services-calendar", version.ref = "google-api-calendar" }
+logback-mcp = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback-mcp" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

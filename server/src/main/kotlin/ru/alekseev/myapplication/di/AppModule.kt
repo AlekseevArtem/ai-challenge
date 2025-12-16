@@ -2,8 +2,8 @@ package ru.alekseev.myapplication.di
 
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
-import kotlinx.serialization.json.Json
 import org.koin.dsl.module
+import ru.alekseev.myapplication.core.common.JsonFactory
 import ru.alekseev.myapplication.db.ChatDatabase
 import ru.alekseev.myapplication.repository.ChatRepository
 import ru.alekseev.myapplication.repository.ChatRepositoryImpl
@@ -11,18 +11,15 @@ import ru.alekseev.myapplication.service.ClaudeApiService
 import ru.alekseev.myapplication.service.MCPClient
 import ru.alekseev.myapplication.service.MCPManager
 import ru.alekseev.myapplication.service.SummarizationService
+import ru.alekseev.myapplication.usecase.HandleSummarizationUseCase
+import ru.alekseev.myapplication.usecase.LoadChatHistoryUseCase
+import ru.alekseev.myapplication.usecase.ProcessUserMessageUseCase
 import java.io.File
 import java.util.Properties
 
 val jsonModule = module {
     single {
-        Json {
-            classDiscriminator = "type"
-            ignoreUnknownKeys = true
-            prettyPrint = true
-            isLenient = true
-            encodeDefaults = true
-        }
+        JsonFactory.create()
     }
 }
 
@@ -127,4 +124,10 @@ val repositoryModule = module {
     single<ChatRepository> { ChatRepositoryImpl(get()) }
 }
 
-val appModules = listOf(jsonModule, databaseModule, serviceModule, repositoryModule)
+val useCaseModule = module {
+    factory { LoadChatHistoryUseCase(get(), get()) }
+    factory { HandleSummarizationUseCase(get(), get()) }
+    factory { ProcessUserMessageUseCase(get(), get(), get()) }
+}
+
+val appModules = listOf(jsonModule, databaseModule, serviceModule, repositoryModule, useCaseModule)

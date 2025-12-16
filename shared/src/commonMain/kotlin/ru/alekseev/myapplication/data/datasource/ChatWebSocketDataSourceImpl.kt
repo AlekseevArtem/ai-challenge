@@ -1,4 +1,4 @@
-package com.example.myapplication.feature_main.data.datasource
+package ru.alekseev.myapplication.data.datasource
 
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.isActive
 import kotlinx.serialization.json.Json
-import ru.alekseev.myapplication.SERVER_WS_URL
+import ru.alekseev.myapplication.core.common.SERVER_WS_URL
 import ru.alekseev.myapplication.data.dto.ChatRequestDto
 import ru.alekseev.myapplication.data.dto.ChatResponseDto
 import kotlin.time.DurationUnit

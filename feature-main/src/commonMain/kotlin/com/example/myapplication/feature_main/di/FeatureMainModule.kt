@@ -1,33 +1,26 @@
 package com.example.myapplication.feature_main.di
 
-import com.example.myapplication.feature_main.data.datasource.ChatWebSocketDataSource
-import com.example.myapplication.feature_main.data.datasource.ChatWebSocketDataSourceImpl
 import com.example.myapplication.feature_main.data.repository.ChatRepositoryImpl
 import com.example.myapplication.feature_main.domain.repository.ChatRepository
 import com.example.myapplication.feature_main.domain.usecase.ConnectToChatUseCase
 import com.example.myapplication.feature_main.domain.usecase.ObserveMessagesUseCase
 import com.example.myapplication.feature_main.domain.usecase.SendMessageUseCase
 import com.example.myapplication.feature_main.presentation.ChatStore
-import kotlinx.serialization.json.Json
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
-import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import ru.alekseev.myapplication.SERVER_WS_URL
+import ru.alekseev.myapplication.core.common.JsonFactory
+import ru.alekseev.myapplication.data.datasource.ChatWebSocketDataSource
+import ru.alekseev.myapplication.data.datasource.ChatWebSocketDataSourceImpl
 
 val featureMainModule = module {
     // Json serializer
     single {
-        Json {
-            classDiscriminator = "type"
-            ignoreUnknownKeys = true
-            prettyPrint = true
-            isLenient = true
-            encodeDefaults = true
-        }
+        JsonFactory.create()
     }
 
+    // Data Source from shared
     singleOf(::ChatWebSocketDataSourceImpl) bind ChatWebSocketDataSource::class
 
     // Repository

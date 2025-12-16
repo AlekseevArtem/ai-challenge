@@ -19,16 +19,16 @@ dependencies {
     implementation(libs.kotlinx.coroutines)
 
     // Google API Client
-    implementation("com.google.api-client:google-api-client:2.7.0")
-    implementation("com.google.oauth-client:google-oauth-client-jetty:1.36.0")
-    implementation("com.google.apis:google-api-services-calendar:v3-rev20220715-2.0.0")
+    implementation(libs.google.api.client)
+    implementation(libs.google.oauth.client)
+    implementation(libs.google.api.calendar)
 
     // Ktor Client for HTTP
-    implementation("io.ktor:ktor-client-core-jvm:3.3.3")
-    implementation("io.ktor:ktor-client-cio-jvm:3.3.3")
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
 
     // Logging
-    implementation("ch.qos.logback:logback-classic:1.5.17")
+    implementation(libs.logback.mcp)
 }
 
 tasks.withType<Jar> {

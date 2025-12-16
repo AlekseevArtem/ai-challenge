@@ -1,4 +1,4 @@
-package com.example.myapplication.feature_main.data.datasource
+package ru.alekseev.myapplication.data.datasource
 
 import kotlinx.coroutines.flow.Flow
 import ru.alekseev.myapplication.data.dto.ChatResponseDto

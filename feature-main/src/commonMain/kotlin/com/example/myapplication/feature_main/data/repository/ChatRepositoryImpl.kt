@@ -1,7 +1,7 @@
 package com.example.myapplication.feature_main.data.repository
 
-import com.example.myapplication.feature_main.data.datasource.ChatWebSocketDataSource
 import com.example.myapplication.feature_main.data.mapper.toDomain
+import ru.alekseev.myapplication.data.datasource.ChatWebSocketDataSource
 import com.example.myapplication.feature_main.domain.entity.ChatMessageState
 import com.example.myapplication.feature_main.domain.repository.ChatRepository
 import kotlinx.coroutines.flow.Flow

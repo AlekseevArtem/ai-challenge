@@ -1,23 +1,13 @@
 @file:Suppress("DSL_SCOPE_VIOLATION")
 
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
 }
 
 kotlin {
     applyDefaultHierarchyTemplate()
-
-    androidTarget {
-        compilations.all {
-            compilerOptions {
-                jvmTarget.set(JvmTarget.JVM_17)
-            }
-        }
-    }
 
     jvm()
 
@@ -55,21 +45,5 @@ kotlin {
                 implementation(libs.kotlinx.coroutines)
             }
         }
-    }
-}
-
-android {
-    namespace = "com.example.myapplication.feature.welcome"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-
-    defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
-    }
-
-    compileOptions {
-        val jvmTargetVersion = libs.versions.jvmTarget.get().toInt()
-
-        sourceCompatibility = JavaVersion.toVersion(jvmTargetVersion)
-        targetCompatibility = JavaVersion.toVersion(jvmTargetVersion)
     }
 }
