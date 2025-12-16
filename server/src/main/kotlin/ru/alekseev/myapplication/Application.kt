@@ -25,6 +25,7 @@ import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.timeout
 import kotlinx.serialization.json.Json
 import org.koin.core.context.startKoin
+import org.koin.java.KoinJavaComponent.inject
 import ru.alekseev.myapplication.di.appModules
 import ru.alekseev.myapplication.routing.chatRouting
 import kotlin.time.Duration.Companion.seconds
@@ -44,6 +45,8 @@ fun main() {
 }
 
 fun Application.module() {
+    val json: Json by inject(Json::class.java)
+
     install(DoubleReceive)
 
     install(CallLogging) {
@@ -81,13 +84,7 @@ fun Application.module() {
     }
 
     install(ContentNegotiation) {
-        json(Json {
-            classDiscriminator = "type"
-            ignoreUnknownKeys = true
-            prettyPrint = true
-            isLenient = true
-            encodeDefaults = true
-        })
+        json(json)
     }
 
     install(CORS) {

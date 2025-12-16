@@ -1,15 +1,13 @@
 package ru.alekseev.myapplication.service
 
-import ru.alekseev.myapplication.dto.ClaudeMessage
-import ru.alekseev.myapplication.dto.ClaudeRequest
+import ru.alekseev.myapplication.data.dto.ClaudeMessage
+import ru.alekseev.myapplication.data.dto.ClaudeRequest
 
 class SummarizationService(
     private val claudeApiService: ClaudeApiService,
 ) {
 
     suspend fun createSummary(messages: List<Pair<String, String>>): String {
-
-        println("SummarizationService: createSummary $messages")
 
         val conversationText = messages.mapIndexed { index, (userMsg, assistantMsg) ->
             """
@@ -41,7 +39,6 @@ class SummarizationService(
 
         val response = claudeApiService.sendMessage(request)
 
-        println("SummarizationService: createSummary ${response.content}")
         return response.content?.firstOrNull { it.type == "text" }?.text
             ?: "Summary could not be generated"
     }

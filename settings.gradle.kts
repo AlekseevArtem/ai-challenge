@@ -35,5 +35,7 @@ plugins {
 include(":composeApp")
 include(":server")
 include(":shared")
+include(":core-network")
+include(":core-common")
 include(":feature-main")
 include(":feature-welcome")

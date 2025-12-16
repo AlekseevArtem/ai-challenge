@@ -1,4 +1,4 @@
-package ru.alekseev.myapplication.dto
+package ru.alekseev.myapplication.core.network.dto
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

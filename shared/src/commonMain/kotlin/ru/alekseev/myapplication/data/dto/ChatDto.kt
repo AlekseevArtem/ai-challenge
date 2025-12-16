@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package ru.alekseev.myapplication.dto
+package ru.alekseev.myapplication.data.dto
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName

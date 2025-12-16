@@ -12,15 +12,16 @@ import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
-import ru.alekseev.myapplication.dto.ClaudeRequest
-import ru.alekseev.myapplication.dto.ClaudeResponse
+import ru.alekseev.myapplication.data.dto.ClaudeRequest
+import ru.alekseev.myapplication.data.dto.ClaudeResponse
 
-class ClaudeApiService {
+class ClaudeApiService(
+    private val json: Json,
+) {
     private val apiKey: String by lazy {
         loadApiKey()
     }
@@ -33,13 +34,7 @@ class ClaudeApiService {
         }
 
         install(ContentNegotiation) {
-            json(Json {
-                classDiscriminator = "type"
-                ignoreUnknownKeys = true
-                prettyPrint = true
-                isLenient = true
-                encodeDefaults = true
-            })
+            json(this@ClaudeApiService.json)
         }
         install(Logging) {
             logger = Logger.DEFAULT
@@ -63,8 +58,6 @@ class ClaudeApiService {
             }
 
             val result = response.body<ClaudeResponse>()
-            println("ClaudeApiService: response status ${response.status}")
-            println("ClaudeApiService: response body $result")
             result
         } catch (e: Exception) {
             throw Exception("Failed to call Claude API: ${e.message}", e)

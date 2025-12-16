@@ -1,13 +1,11 @@
 package com.example.myapplication.feature_main.domain.entity
 
-import ru.alekseev.myapplication.dto.MessageInfoDto
-
 data class ChatMessage(
     val id: String,
     val content: String,
     val isFromUser: Boolean,
     val timestamp: Long,
-    val messageInfo: MessageInfoDto? = null
+    val messageInfo: MessageInfo? = null
 )
 
 sealed interface ChatMessageState {

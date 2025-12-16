@@ -6,9 +6,15 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.encodeToString
 import org.koin.java.KoinJavaComponent.inject
-import ru.alekseev.myapplication.dto.*
+import ru.alekseev.myapplication.data.dto.ChatMessageDto
+import ru.alekseev.myapplication.data.dto.ChatRequestDto
+import ru.alekseev.myapplication.data.dto.ChatResponseDto
+import ru.alekseev.myapplication.data.dto.ClaudeMessage
+import ru.alekseev.myapplication.data.dto.ClaudeRequest
+import ru.alekseev.myapplication.data.dto.ClaudeResponse
+import ru.alekseev.myapplication.data.dto.MessageInfoDto
+import ru.alekseev.myapplication.data.dto.MessageSender
 import ru.alekseev.myapplication.repository.ChatRepository
 import ru.alekseev.myapplication.service.ClaudeApiService
 import ru.alekseev.myapplication.service.SummarizationService
@@ -19,14 +25,7 @@ fun Route.chatRouting() {
     val chatRepository: ChatRepository by inject(ChatRepository::class.java)
     val claudeApiService: ClaudeApiService by inject(ClaudeApiService::class.java)
     val summarizationService: SummarizationService by inject(SummarizationService::class.java)
-
-    val json = Json {
-        classDiscriminator = "type"
-        ignoreUnknownKeys = true
-        prettyPrint = true
-        isLenient = true
-        encodeDefaults = true
-    }
+    val json: Json by inject(Json::class.java)
 
     webSocket("/chat") {
         val userId = "default_user"
@@ -102,11 +101,8 @@ fun Route.chatRouting() {
 
                         // Check if we need to perform summarization
                         val uncompressedCount = chatRepository.getUncompressedMessagesCount(userId)
-                        println("=== SUMMARIZATION CHECK ===")
-                        println("Uncompressed messages count: $uncompressedCount")
 
                         if (uncompressedCount >= 5) {
-                            println("Starting summarization of messages...")
                             val uncompressedMessages = chatRepository.getUncompressedMessages(userId)
 
                             // Create summary uncompressed messages
@@ -116,7 +112,6 @@ fun Route.chatRouting() {
 
                             try {
                                 val summaryText = summarizationService.createSummary(messagePairs)
-                                println("Summary created successfully: ${summaryText.take(100)}...")
 
                                 // Save summary
                                 val summaries = chatRepository.getAllSummaries(userId)
@@ -128,21 +123,15 @@ fun Route.chatRouting() {
                                     position = summaries.size,
                                     userId = userId
                                 )
-                                println("Summary saved. Total summaries: ${summaries.size + 1}")
 
                                 // Mark messages as compressed
                                 chatRepository.markMessagesAsCompressed(
                                     uncompressedMessages.map { it.id }
                                 )
-                                println("Marked ${uncompressedMessages.size} messages as compressed")
                             } catch (e: Exception) {
-                                println("ERROR during summarization: ${e.message}")
                                 e.printStackTrace()
                             }
-                        } else {
-                            println("Not enough messages for summarization (need 5, have $uncompressedCount)")
                         }
-                        println("=== END SUMMARIZATION CHECK ===")
 
                         // Build message history for Claude API
                         val summaries = chatRepository.getAllSummaries(userId)
@@ -275,7 +264,6 @@ fun Route.chatRouting() {
                 }
             }
         } catch (e: Exception) {
-            println("WebSocket error: ${e.message}")
             e.printStackTrace()
         }
     }

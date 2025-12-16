@@ -73,6 +73,9 @@ kotlin {
             implementation(libs.flowmvi.core)
             implementation(libs.flowmvi.compose)
 
+            // Koin
+            implementation(libs.koin.core)
+
             // Feature modules
             implementation(project(":feature-main"))
             implementation(project(":feature-welcome"))

@@ -1,9 +1,9 @@
 package com.example.myapplication.feature_main.presentation.messageinfo
 
-import ru.alekseev.myapplication.dto.MessageInfoDto
+import com.example.myapplication.feature_main.domain.entity.MessageInfo
 
 interface MessageInfoComponent {
-    val messageInfo: MessageInfoDto
+    val messageInfo: MessageInfo
 
     fun onDismiss()
 }

@@ -1,7 +1,7 @@
 package com.example.myapplication.feature_main.data.datasource
 
 import kotlinx.coroutines.flow.Flow
-import ru.alekseev.myapplication.dto.ChatResponseDto
+import ru.alekseev.myapplication.data.dto.ChatResponseDto
 
 interface ChatWebSocketDataSource {
 

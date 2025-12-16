@@ -8,12 +8,8 @@ import com.arkivanov.decompose.router.slot.childSlot
 import com.arkivanov.decompose.router.slot.dismiss
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.lifecycle.doOnDestroy
-import com.example.myapplication.feature_main.data.datasource.ChatWebSocketDataSource
-import com.example.myapplication.feature_main.data.repository.ChatRepositoryImpl
 import com.example.myapplication.feature_main.domain.entity.ChatMessage
-import com.example.myapplication.feature_main.domain.usecase.ConnectToChatUseCase
-import com.example.myapplication.feature_main.domain.usecase.ObserveMessagesUseCase
-import com.example.myapplication.feature_main.domain.usecase.SendMessageUseCase
+import com.example.myapplication.feature_main.domain.entity.MessageInfo
 import com.example.myapplication.feature_main.presentation.messageinfo.DefaultMessageInfoComponent
 import com.example.myapplication.feature_main.presentation.messageinfo.MessageInfoComponent
 import kotlinx.coroutines.CoroutineScope
@@ -22,26 +18,20 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.serializer
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import pro.respawn.flowmvi.api.Store
-import ru.alekseev.myapplication.dto.MessageInfoDto
+import ru.alekseev.myapplication.data.dto.MessageInfoDto
 
 class DefaultMainComponent(
     componentContext: ComponentContext,
-    webSocketDataSource: ChatWebSocketDataSource,
-) : MainComponent, ComponentContext by componentContext {
+) : MainComponent, ComponentContext by componentContext, KoinComponent {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    private val repository = ChatRepositoryImpl(webSocketDataSource)
+    private val chatStore: ChatStore by inject()
 
-    private val store = ChatStore(
-        sendMessageUseCase = SendMessageUseCase(repository),
-        observeMessagesUseCase = ObserveMessagesUseCase(repository),
-        connectToChatUseCase = ConnectToChatUseCase(repository)
-    )
-
-    override val state: Store<ChatState, ChatIntent, ChatAction> = store.store
+    override val state: Store<ChatState, ChatIntent, ChatAction> = chatStore.store
 
     private val messageInfoNavigation = SlotNavigation<MessageInfoConfig>()
 
@@ -60,34 +50,34 @@ class DefaultMainComponent(
     init {
         lifecycle.doOnDestroy {
             scope.cancel()
-            store.store.close()
+            state.close()
         }
 
         scope.launch {
-            store.store.start(scope)
+            state.start(scope)
         }
     }
 
     @Serializable
     private data class MessageInfoConfig(
-        val messageInfo: MessageInfoDto
+        val messageInfo: MessageInfo,
     )
 
     override fun onSendMessage(message: String) {
         scope.launch {
-            store.store.emit(ChatIntent.SendMessage(message))
+            state.emit(ChatIntent.SendMessage(message))
         }
     }
 
     override fun onMessageTextChanged(text: String) {
         scope.launch(Dispatchers.Unconfined) {
-            store.store.emit(ChatIntent.UpdateMessageText(text))
+            state.emit(ChatIntent.UpdateMessageText(text))
         }
     }
 
     override fun onClearError() {
         scope.launch {
-            store.store.emit(ChatIntent.ClearError)
+            state.emit(ChatIntent.ClearError)
         }
     }
 
