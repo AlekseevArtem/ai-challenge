@@ -1,55 +1,326 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Chat UI</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Challenge - MCP Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        .status.connected {
+            background: #10b981;
+            color: white;
+        }
+
+        .status.disconnected {
+            background: #ef4444;
+            color: white;
+        }
+
+        .status.loading {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 968px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .panel h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .tools-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .tool-item {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .tool-item:hover {
+            background: #e0e7ff;
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .tool-item.selected {
+            background: #e0e7ff;
+            border-left-color: #764ba2;
+        }
+
+        .tool-name {
+            font-weight: 700;
+            color: #333;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .tool-description {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 10px;
+        }
+
+        .tool-schema {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            color: #4b5563;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .tool-item.expanded .tool-schema {
+            max-height: 500px;
+            margin-top: 10px;
+        }
+
+        .call-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        .input-group input,
+        .input-group select,
+        .input-group textarea {
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-group textarea {
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .result-box {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #10b981;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .result-box h3 {
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+
+        .result-content {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #4b5563;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .error {
+            background: #fee2e2;
+            border-left-color: #ef4444;
+        }
+
+        .error h3 {
+            color: #dc2626;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
-
-<div class="page-center">
-    <div class="chat-wrapper">
-        <div class="chat-header">
-            <div class="status-dot"></div>
-            <span>Claude</span>
-            <button id="settings-btn" class="settings-btn">⚙</button>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Challenge - MCP Client</h1>
+            <p>Model Context Protocol Integration Demo</p>
+            <div class="status loading" id="status">⏳ Загрузка...</div>
         </div>
 
-        <div class="chat-messages" id="messages"></div>
+        <div class="content">
+            <div class="panel">
+                <h2>📋 Доступные инструменты</h2>
+                <div id="tools-list" class="tools-list">
+                    <div class="loading show">
+                        <div class="spinner"></div>
+                        <p>Загрузка инструментов...</p>
+                    </div>
+                </div>
+            </div>
 
-        <div class="chat-input">
-            <input id="messageInput" type="text" placeholder="Напишите сообщение..."/>
-            <button id="send-btn"><i class="fas fa-paper-plane"></i></button>
+            <div class="panel">
+                <h2>🔧 Вызов инструмента</h2>
+                <div id="call-panel" class="call-panel">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👈</div>
+                        <p>Выберите инструмент слева</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="settingsModal">
-    <div class="modal-content">
-        <h3>Настройки</h3>
-        <label>Температура: <span id="progressValue">0.0</span></label><br>
-        <input type="range" id="progressRange" min="0" max="1" step="0.1" value="0"><br>
-        <button id="closeSettings" class="close-modal-btn">Закрыть</button>
-    </div>
-</div>
-
-<div id="tokenModal" class="modal">
-    <div class="modal-content token-modal-content">
-        <h3>Информация о сообщении</h3>
-        <div id="tokenInfo">
-            <p><strong>Модель:</strong> <span id="modalModel">-</span></p>
-            <p><strong>Входные токены:</strong> <span id="modalInputTokens">-</span></p>
-            <p><strong>Выходные токены:</strong> <span id="modalOutputTokens">-</span></p>
-            <p><strong>Всего токенов:</strong> <span id="modalTotalTokens">-</span></p>
-            <p><strong>Стоимость:</strong> <span id="modalCost">-</span></p>
-            <p><strong>Время:</strong> <span id="modalTimestamp">-</span></p>
-        </div>
-        <button id="closeTokenModal" class="close-modal-btn">Закрыть</button>
-    </div>
-</div>
-
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

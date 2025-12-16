@@ -1,12 +1,21 @@
 {
-  "name": "gigachat-proxy",
+  "name": "ai-challenge-backend",
   "version": "1.0.0",
+  "description": "Backend for AI Challenge with MCP integration",
   "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "mcp-server": "node mcp-server.js",
+    "mcp-client": "node mcp-client.js"
+  },
   "dependencies": {
-    "axios": "^1.6.2",
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "express": "^4.21.2",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^4.18.2",
-    "uuid": "^13.0.0"
+    "dotenv": "^16.4.7"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
