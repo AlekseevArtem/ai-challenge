@@ -1,0 +1,4 @@
+# Ignore all files in tokens directory except this .gitignore
+.gitignore
+tokens
+google-calendar-credentials.json

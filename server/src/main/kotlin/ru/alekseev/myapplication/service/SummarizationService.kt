@@ -1,6 +1,7 @@
 package ru.alekseev.myapplication.service
 
 import ru.alekseev.myapplication.data.dto.ClaudeMessage
+import ru.alekseev.myapplication.data.dto.ClaudeMessageContent
 import ru.alekseev.myapplication.data.dto.ClaudeRequest
 
 class SummarizationService(
@@ -32,7 +33,7 @@ class SummarizationService(
             messages = listOf(
                 ClaudeMessage(
                     role = "user",
-                    content = summaryPrompt
+                    content = ClaudeMessageContent.Text(summaryPrompt)
                 )
             )
         )

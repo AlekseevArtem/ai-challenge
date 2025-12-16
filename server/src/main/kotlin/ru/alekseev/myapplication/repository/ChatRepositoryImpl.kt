@@ -7,7 +7,7 @@ import ru.alekseev.myapplication.db.Message
 import ru.alekseev.myapplication.db.Summary
 
 class ChatRepositoryImpl(
-    private val database: ChatDatabase,
+    database: ChatDatabase,
 ) : ChatRepository {
 
     private val queries = database.chatDatabaseQueries

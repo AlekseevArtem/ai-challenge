@@ -14,8 +14,13 @@ services:
     restart: unless-stopped
     env_file:
       - claude-api-key.env
+    environment:
+      - GOOGLE_CALENDAR_CREDENTIALS_PATH=/app/server/google-calendar-credentials.json
+      - GOOGLE_CALENDAR_TOKENS_PATH=/app/server/tokens
+      - MCP_HEADLESS=true
     volumes:
       - chat-data:/home/appuser
+      - ./server/tokens:/app/server/tokens
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]
       interval: 30s

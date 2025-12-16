@@ -7,14 +7,7 @@ import io.ktor.websocket.readText
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.json.Json
 import org.koin.java.KoinJavaComponent.inject
-import ru.alekseev.myapplication.data.dto.ChatMessageDto
-import ru.alekseev.myapplication.data.dto.ChatRequestDto
-import ru.alekseev.myapplication.data.dto.ChatResponseDto
-import ru.alekseev.myapplication.data.dto.ClaudeMessage
-import ru.alekseev.myapplication.data.dto.ClaudeRequest
-import ru.alekseev.myapplication.data.dto.ClaudeResponse
-import ru.alekseev.myapplication.data.dto.MessageInfoDto
-import ru.alekseev.myapplication.data.dto.MessageSender
+import ru.alekseev.myapplication.data.dto.*
 import ru.alekseev.myapplication.repository.ChatRepository
 import ru.alekseev.myapplication.service.ClaudeApiService
 import ru.alekseev.myapplication.service.SummarizationService
@@ -147,13 +140,13 @@ fun Route.chatRouting() {
                             messagesForApi.add(
                                 ClaudeMessage(
                                     role = "user",
-                                    content = summaryContext
+                                    content = ClaudeMessageContent.Text(summaryContext)
                                 )
                             )
                             messagesForApi.add(
                                 ClaudeMessage(
                                     role = "assistant",
-                                    content = "I understand the context from previous conversations."
+                                    content = ClaudeMessageContent.Text("I understand the context from previous conversations.")
                                 )
                             )
                         }
@@ -161,16 +154,16 @@ fun Route.chatRouting() {
                         // Add uncompressed messages
                         uncompressedMessages.forEach { msg ->
                             messagesForApi.add(
-                                ClaudeMessage(role = "user", content = msg.user_message)
+                                ClaudeMessage(role = "user", content = ClaudeMessageContent.Text(msg.user_message))
                             )
                             messagesForApi.add(
-                                ClaudeMessage(role = "assistant", content = msg.assistant_message)
+                                ClaudeMessage(role = "assistant", content = ClaudeMessageContent.Text(msg.assistant_message))
                             )
                         }
 
                         // Add current user message
                         messagesForApi.add(
-                            ClaudeMessage(role = "user", content = request.message)
+                            ClaudeMessage(role = "user", content = ClaudeMessageContent.Text(request.message))
                         )
 
                         // Create Claude API request

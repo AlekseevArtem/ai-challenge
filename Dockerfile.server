@@ -21,6 +21,10 @@ RUN ./gradlew dependencies --no-daemon || true
 # Copy source code
 COPY shared shared
 COPY server server
+COPY mcp-server mcp-server
+
+# Build MCP server first
+RUN ./gradlew :mcp-server:jar --no-daemon --stacktrace
 
 # Build the server application
 RUN ./gradlew :server:installDist --no-daemon --stacktrace
@@ -33,10 +37,20 @@ WORKDIR /app
 # Copy the built application from builder
 COPY --from=builder /app/server/build/install/server /app
 
+# Copy MCP server JAR
+COPY --from=builder /app/mcp-server/build/libs/mcp-server-1.0.0.jar /app/mcp-server/build/libs/mcp-server-1.0.0.jar
+
+# Copy Google Calendar credentials if they exist
+COPY server/google-calendar-credentials.json /app/server/google-calendar-credentials.json
+
+# Copy tokens directory (will be empty on first run, populated after OAuth)
+COPY server/tokens /app/server/tokens
+
 # Create a non-root user and home directory
 RUN groupadd -r appgroup && useradd -r -g appgroup -m -d /home/appuser appuser && \
     mkdir -p /home/appuser && \
-    chown -R appuser:appgroup /home/appuser
+    chown -R appuser:appgroup /home/appuser && \
+    chown -R appuser:appgroup /app
 USER appuser
 
 # Expose the server port
