@@ -1,5 +1,9 @@
-package ru.alekseev.mcp
+package ru.alekseev.mcp.services.calendar
 
+import CreateEventParams
+import DeleteEventParams
+import ListEventsParams
+import UpdateEventParams
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver
@@ -14,6 +18,7 @@ import com.google.api.services.calendar.CalendarScopes
 import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.EventAttendee
 import com.google.api.services.calendar.model.EventDateTime
+import java.awt.GraphicsEnvironment
 import java.io.File
 import java.io.FileReader
 
@@ -73,7 +78,7 @@ class GoogleCalendarService {
         // Check if we're in a headless/Docker environment
         val isHeadless = System.getenv("DISPLAY") == null ||
                         System.getenv("MCP_HEADLESS") == "true" ||
-                        !java.awt.GraphicsEnvironment.isHeadless().not()
+                        !GraphicsEnvironment.isHeadless().not()
 
         if (isHeadless) {
             System.err.println("[GoogleCalendarService] ERROR: Running in headless environment, cannot start OAuth flow")
@@ -112,13 +117,6 @@ class GoogleCalendarService {
         cal
     }
 
-    data class ListEventsParams(
-        val maxResults: Int = 10,
-        val timeMin: String? = null,
-        val timeMax: String? = null,
-        val calendarId: String = "primary"
-    )
-
     fun listEvents(params: ListEventsParams): String {
         System.err.println("[GoogleCalendarService] listEvents called with params: $params")
 
@@ -156,16 +154,6 @@ class GoogleCalendarService {
         }
     }
 
-    data class CreateEventParams(
-        val summary: String,
-        val description: String? = null,
-        val startDateTime: String,
-        val endDateTime: String,
-        val timeZone: String = "UTC",
-        val attendees: List<String>? = null,
-        val calendarId: String = "primary"
-    )
-
     fun createEvent(params: CreateEventParams): String {
         System.err.println("[GoogleCalendarService] createEvent called with params: $params")
 
@@ -201,16 +189,6 @@ class GoogleCalendarService {
             appendLine("Link: ${createdEvent.htmlLink}")
         }
     }
-
-    data class UpdateEventParams(
-        val eventId: String,
-        val summary: String? = null,
-        val description: String? = null,
-        val startDateTime: String? = null,
-        val endDateTime: String? = null,
-        val timeZone: String? = null,
-        val calendarId: String = "primary"
-    )
 
     fun updateEvent(params: UpdateEventParams): String {
         System.err.println("[GoogleCalendarService] updateEvent called for eventId: ${params.eventId}")
@@ -262,11 +240,6 @@ class GoogleCalendarService {
             appendLine("End: ${updatedEvent.end.dateTime}")
         }
     }
-
-    data class DeleteEventParams(
-        val eventId: String,
-        val calendarId: String = "primary"
-    )
 
     fun deleteEvent(params: DeleteEventParams): String {
         System.err.println("[GoogleCalendarService] deleteEvent called for eventId: ${params.eventId}, calendarId: ${params.calendarId}")

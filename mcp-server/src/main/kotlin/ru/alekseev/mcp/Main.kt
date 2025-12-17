@@ -1,14 +1,31 @@
 package ru.alekseev.mcp
 
 import kotlinx.serialization.json.Json
+import ru.alekseev.mcp.models.JSONRPCError
+import ru.alekseev.mcp.models.JSONRPCRequest
+import ru.alekseev.mcp.models.JSONRPCResponse
+import ru.alekseev.mcp.services.calendar.CalendarToolProvider
+import ru.alekseev.mcp.services.calendar.GoogleCalendarService
+import ru.alekseev.mcp.services.reminder.ReminderService
+import ru.alekseev.mcp.services.reminder.ReminderToolProvider
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
 fun main() {
-    System.err.println("Google Calendar MCP Server starting...")
+    System.err.println("MCP Server starting (Google Calendar + Reminders)...")
 
+    // Create services
     val calendarService = GoogleCalendarService()
-    val server = MCPServer(calendarService)
+    val reminderService = ReminderService()
+
+    // Create tool providers
+    val toolProviders = listOf(
+        CalendarToolProvider(calendarService),
+        ReminderToolProvider(reminderService)
+    )
+
+    // Create MCP server with all providers
+    val server = MCPServer(toolProviders)
     val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
@@ -16,7 +33,7 @@ fun main() {
 
     val reader = BufferedReader(InputStreamReader(System.`in`))
 
-    System.err.println("Google Calendar MCP Server running on stdio")
+    System.err.println("MCP Server running on stdio with Calendar and Reminder tools")
 
     try {
         while (true) {

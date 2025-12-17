@@ -11,6 +11,8 @@ import ru.alekseev.myapplication.service.ClaudeApiService
 import ru.alekseev.myapplication.service.MCPClient
 import ru.alekseev.myapplication.service.MCPManager
 import ru.alekseev.myapplication.service.SummarizationService
+import ru.alekseev.myapplication.service.ReminderSchedulerService
+import ru.alekseev.myapplication.service.WebSocketManager
 import ru.alekseev.myapplication.usecase.HandleSummarizationUseCase
 import ru.alekseev.myapplication.usecase.LoadChatHistoryUseCase
 import ru.alekseev.myapplication.usecase.ProcessUserMessageUseCase
@@ -53,6 +55,8 @@ val databaseModule = module {
 val serviceModule = module {
     single { ClaudeApiService(get(), get()) }
     single { SummarizationService(get()) }
+    single { ReminderSchedulerService(get()) }
+    single { WebSocketManager(get(), get()) }
 
     single {
         val mcpManager = MCPManager()

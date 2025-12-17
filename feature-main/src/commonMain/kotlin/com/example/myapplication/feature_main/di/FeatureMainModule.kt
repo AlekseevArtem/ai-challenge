@@ -3,6 +3,7 @@ package com.example.myapplication.feature_main.di
 import com.example.myapplication.feature_main.data.repository.ChatRepositoryImpl
 import com.example.myapplication.feature_main.domain.repository.ChatRepository
 import com.example.myapplication.feature_main.domain.usecase.ConnectToChatUseCase
+import com.example.myapplication.feature_main.domain.usecase.DispatchAlertUseCase
 import com.example.myapplication.feature_main.domain.usecase.ObserveMessagesUseCase
 import com.example.myapplication.feature_main.domain.usecase.SendMessageUseCase
 import com.example.myapplication.feature_main.presentation.ChatStore
@@ -30,6 +31,7 @@ val featureMainModule = module {
     factoryOf(::SendMessageUseCase)
     factoryOf(::ObserveMessagesUseCase)
     factoryOf(::ConnectToChatUseCase)
+    factoryOf(::DispatchAlertUseCase)
 
     // Store
     factoryOf(::ChatStore)

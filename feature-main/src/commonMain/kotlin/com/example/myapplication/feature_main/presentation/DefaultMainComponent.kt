@@ -21,7 +21,6 @@ import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import pro.respawn.flowmvi.api.Store
-import ru.alekseev.myapplication.data.dto.MessageInfoDto
 
 class DefaultMainComponent(
     componentContext: ComponentContext,

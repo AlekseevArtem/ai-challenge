@@ -1,4 +1,4 @@
-package ru.alekseev.mcp
+package ru.alekseev.mcp.models
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement

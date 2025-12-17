@@ -6,10 +6,20 @@ import androidx.compose.ui.window.rememberWindowState
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.decompose.extensions.compose.lifecycle.LifecycleController
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.example.myapplication.feature_main.di.featureMainModule
+import org.koin.core.context.startKoin
+import ru.alekseev.myapplication.di.platformModule
 import ru.alekseev.myapplication.root.DefaultRootComponent
 import ru.alekseev.myapplication.root.RootContent
 
 fun main() {
+    // Initialize Koin
+    startKoin {
+        modules(
+            platformModule,
+            featureMainModule
+        )
+    }
 
     val lifecycle = LifecycleRegistry()
 

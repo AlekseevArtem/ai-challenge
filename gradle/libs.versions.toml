@@ -24,11 +24,14 @@ flowmvi = "3.2.1"
 koin = "4.1.1"
 compose-materialIcons = "1.7.3"
 kotlinx-datetime = "0.7.1"
+permissionsCompose = "0.20.1"
 sqldelight = "2.2.1"
 google-api-client = "2.8.1"
 google-oauth-client = "1.39.0"
 google-api-calendar = "v3-rev20220715-2.0.0"
 logback-mcp = "1.5.22"
+core = "1.17.0"
+sqliteJdbc = "3.51.1.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -49,6 +52,9 @@ ktor-serverTestHost = { module = "io.ktor:ktor-server-test-host-jvm", version.re
 decompose-decompose = { group = "com.arkivanov.decompose", name = "decompose", version.ref = "decompose" }
 decompose-extensionsComposeJetbrains = { group = "com.arkivanov.decompose", name = "extensions-compose", version.ref = "decompose" }
 essenty-lifecycle = { group = "com.arkivanov.essenty", name = "lifecycle", version.ref = "essenty" }
+permissions = { module = "dev.icerock.moko:permissions", version.ref = "permissionsCompose" }
+permissions-compose = { module = "dev.icerock.moko:permissions-compose", version.ref = "permissionsCompose" }
+permissions-notifications = { module = "dev.icerock.moko:permissions-notifications", version.ref = "permissionsCompose" }
 serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 flowmvi-core = { group = "pro.respawn.flowmvi", name = "core", version.ref = "flowmvi" }
 flowmvi-compose = { group = "pro.respawn.flowmvi", name = "compose", version.ref = "flowmvi" }
@@ -68,6 +74,7 @@ ktor-client-websockets = { group = "io.ktor", name = "ktor-client-websockets", v
 ktor-client-contentNegotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version.ref = "ktor" }
 ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
+ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
 ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }
 ktor-client-js = { group = "io.ktor", name = "ktor-client-js", version.ref = "ktor" }
@@ -80,7 +87,8 @@ ktor-server-doubleReceive = { group = "io.ktor", name = "ktor-server-double-rece
 google-api-client = { group = "com.google.api-client", name = "google-api-client", version.ref = "google-api-client" }
 google-oauth-client = { group = "com.google.oauth-client", name = "google-oauth-client-jetty", version.ref = "google-oauth-client" }
 google-api-calendar = { group = "com.google.apis", name = "google-api-services-calendar", version.ref = "google-api-calendar" }
-logback-mcp = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback-mcp" }
+androidx-core = { group = "androidx.core", name = "core", version.ref = "core" }
+sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

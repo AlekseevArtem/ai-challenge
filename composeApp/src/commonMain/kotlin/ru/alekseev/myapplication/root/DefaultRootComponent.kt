@@ -7,24 +7,15 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.popTo
 import com.arkivanov.decompose.value.Value
-import com.example.myapplication.feature_main.di.featureMainModule
 import com.example.myapplication.feature_main.presentation.DefaultMainComponent
 import com.example.myapplication.feature_main.presentation.MainComponent
 import com.example.myapplication.feature_welcome.presentation.DefaultWelcomeComponent
 import com.example.myapplication.feature_welcome.presentation.WelcomeComponent
 import kotlinx.serialization.Serializable
-import org.koin.core.context.startKoin
 
 class DefaultRootComponent(
     componentContext: ComponentContext,
 ) : RootComponent, ComponentContext by componentContext {
-
-    init {
-        // Initialize Koin
-        startKoin {
-            modules(featureMainModule)
-        }
-    }
 
     private val navigation = StackNavigation<Config>()
 

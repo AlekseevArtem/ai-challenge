@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package ru.alekseev.myapplication.routing
 
 import io.ktor.server.routing.Route
@@ -12,6 +14,9 @@ import ru.alekseev.myapplication.data.dto.*
 import ru.alekseev.myapplication.usecase.HandleSummarizationUseCase
 import ru.alekseev.myapplication.usecase.LoadChatHistoryUseCase
 import ru.alekseev.myapplication.usecase.ProcessUserMessageUseCase
+import ru.alekseev.myapplication.service.WebSocketManager
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * WebSocket route for chat functionality.
@@ -28,9 +33,14 @@ fun Route.chatRouting() {
     val loadChatHistoryUseCase: LoadChatHistoryUseCase by inject(LoadChatHistoryUseCase::class.java)
     val handleSummarizationUseCase: HandleSummarizationUseCase by inject(HandleSummarizationUseCase::class.java)
     val processUserMessageUseCase: ProcessUserMessageUseCase by inject(ProcessUserMessageUseCase::class.java)
+    val webSocketManager: WebSocketManager by inject(WebSocketManager::class.java)
 
     webSocket("/chat") {
         val userId = ChatConstants.DEFAULT_USER_ID
+        val connectionId = Uuid.random().toString()
+
+        // Register this connection
+        webSocketManager.registerConnection(connectionId, this)
 
         try {
             // Load and send chat history on connection
@@ -105,6 +115,9 @@ fun Route.chatRouting() {
             }
         } catch (e: Exception) {
             e.printStackTrace()
+        } finally {
+            // Unregister connection when WebSocket closes
+            webSocketManager.unregisterConnection(connectionId)
         }
     }
 }

@@ -15,4 +15,6 @@ sealed interface ChatMessageState {
     data class Data(val message: ChatMessage) : ChatMessageState
 
     data class History(val messages: List<ChatMessage>) : ChatMessageState
+
+    data class Alert(val alert: AlertEntity) : ChatMessageState
 }

@@ -38,8 +38,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,7 +50,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
@@ -58,6 +62,8 @@ import com.example.myapplication.feature_main.presentation.PreviewMainComponent
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import ru.alekseev.myapplication.main.messageinfo.MessageInfoContent
+import ru.alekseev.myapplication.permissions.PermissionDeniedException
+import ru.alekseev.myapplication.permissions.rememberPermissionsWrapper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,6 +72,19 @@ internal fun MainContent(
     modifier: Modifier = Modifier,
 ) {
     val state by component.state.subscribe()
+
+    val permissionsWrapper = rememberPermissionsWrapper()
+
+    permissionsWrapper.BindEffect()
+
+    // TODO(cделать красивую обертку)
+    LaunchedEffect(Unit) {
+        try {
+            permissionsWrapper.requestNotificationPermission()
+        } catch (e: PermissionDeniedException) {
+            // Permission denied, silently ignore
+        }
+    }
 
     Box(
         modifier = modifier
@@ -330,6 +349,14 @@ private fun MessageInputArea(
 ) {
     val focusRequester = remember { FocusRequester() }
 
+    var textFieldValue by remember { mutableStateOf(TextFieldValue(currentMessage)) }
+
+    LaunchedEffect(currentMessage) {
+        if (currentMessage != textFieldValue.text) {
+            textFieldValue = TextFieldValue(currentMessage, selection = TextRange(currentMessage.length))
+        }
+    }
+
     Surface(
         modifier = modifier,
         color = Color(0xFF1A1A2E),
@@ -343,8 +370,11 @@ private fun MessageInputArea(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             OutlinedTextField(
-                value = currentMessage,
-                onValueChange = onMessageChanged,
+                value = textFieldValue,
+                onValueChange = { newValue ->
+                    textFieldValue = newValue
+                    onMessageChanged(newValue.text)
+                },
                 modifier = Modifier
                     .weight(1f)
                     .focusRequester(focusRequester),

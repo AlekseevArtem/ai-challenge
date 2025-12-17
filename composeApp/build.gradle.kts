@@ -48,10 +48,6 @@ kotlin {
     }
     
     sourceSets {
-        androidMain.dependencies {
-            implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
-        }
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -75,17 +71,36 @@ kotlin {
 
             // Koin
             implementation(libs.koin.core)
+            implementation(libs.koin.compose)
 
             // Feature modules
             implementation(project(":feature-main"))
             implementation(project(":feature-welcome"))
         }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
+        androidMain.dependencies {
+            implementation(compose.preview)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.koin.android)
+
+            //Permission-compose (only for Android and iOS)
+            api(libs.permissions.compose)
+            api(libs.permissions)
+            implementation(libs.permissions.notifications)
+        }
+        val iosMain by getting {
+            dependencies {
+                //Permission-compose (only for Android and iOS)
+                api(libs.permissions.compose)
+                api(libs.permissions)
+                implementation(libs.permissions.notifications)
+            }
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
         }
     }
 }

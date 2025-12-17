@@ -21,8 +21,6 @@ import kotlinx.serialization.json.Json
 import ru.alekseev.myapplication.core.common.SERVER_WS_URL
 import ru.alekseev.myapplication.data.dto.ChatRequestDto
 import ru.alekseev.myapplication.data.dto.ChatResponseDto
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
 
 class ChatWebSocketDataSourceImpl(
     private val json: Json,
@@ -30,19 +28,12 @@ class ChatWebSocketDataSourceImpl(
 
     private val serverUrl: String = SERVER_WS_URL
 
-    private val client = HttpClient {
-        install(WebSockets) {
-            pingInterval = 20_000.toDuration(DurationUnit.MILLISECONDS)
-        }
-        install(ContentNegotiation) {
-            json(json)
-        }
-    }
+    private val client = createHttpClient(json)
 
     private var session: WebSocketSession? = null
 
     override suspend fun connect() {
-        if (session?.isActive == true) {
+        if (session != null && session?.isActive == true) {
             return
         }
 
@@ -79,17 +70,16 @@ class ChatWebSocketDataSourceImpl(
     }
 
     override fun observeMessages(): Flow<ChatResponseDto> = callbackFlow {
-        val webSocketSession = try {
-            client.webSocketSession(serverUrl)
-        } catch (e: Exception) {
-            trySend(
-                ChatResponseDto.Error(
-                    error = "Failed to connect: ${e.message}",
+        val webSocketSession = session
+            ?: run {
+                trySend(
+                    ChatResponseDto.Error(
+                        error = "Failed to connect",
+                    )
                 )
-            )
-            close(e)
-            return@callbackFlow
-        }
+                close(IllegalStateException("WebSocket not connected"))
+                return@callbackFlow
+            }
 
         session = webSocketSession
 
@@ -99,15 +89,25 @@ class ChatWebSocketDataSourceImpl(
                 .filterIsInstance<Frame.Text>()
                 .mapNotNull { frame ->
                     val text = frame.readText()
+                    println("[ChatWebSocket] Received text: '$text'")
+
+                    // Skip empty messages
+                    if (text.isBlank()) {
+                        println("[ChatWebSocket] Skipping empty message")
+                        return@mapNotNull null
+                    }
+
                     try {
                         val decoded = json.decodeFromString(
                             ChatResponseDto.serializer(),
                             text
                         )
+                        println("[ChatWebSocket] Successfully decoded: $decoded")
                         decoded
                     } catch (e: Exception) {
+                        println("[ChatWebSocket] Parse error: ${e.message}")
                         ChatResponseDto.Error(
-                            error = "Failed to parse response: ${e.message}",
+                            error = "Failed to parse response: ${e.message}\nJSON input: $text",
                         )
                     }
                 }

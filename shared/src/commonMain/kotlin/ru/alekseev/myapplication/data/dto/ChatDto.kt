@@ -52,6 +52,10 @@ sealed interface ChatResponseDto {
     @Serializable
     @SerialName("history")
     data class History(val messages: List<ChatMessageDto>) : ChatResponseDto
+
+    @Serializable
+    @SerialName("alert")
+    data class Alert(val alert: UserAlertDto) : ChatResponseDto
 }
 
 @Serializable

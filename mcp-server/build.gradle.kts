@@ -27,8 +27,11 @@ dependencies {
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
 
+    // SQLite for Reminders
+    implementation(libs.sqlite.jdbc)
+
     // Logging
-    implementation(libs.logback.mcp)
+    implementation(libs.logback)
 }
 
 tasks.withType<Jar> {

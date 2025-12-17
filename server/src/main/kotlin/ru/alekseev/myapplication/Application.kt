@@ -27,8 +27,10 @@ import io.ktor.server.websocket.timeout
 import kotlinx.serialization.json.Json
 import org.koin.core.context.startKoin
 import org.koin.java.KoinJavaComponent.inject
+import ru.alekseev.myapplication.core.common.SERVER_PORT
 import ru.alekseev.myapplication.di.appModules
 import ru.alekseev.myapplication.routing.chatRouting
+import ru.alekseev.myapplication.service.ReminderSchedulerService
 import kotlin.time.Duration.Companion.seconds
 
 fun main() {
@@ -92,6 +94,11 @@ fun Application.module() {
         anyHost()
         allowHeader("Content-Type")
     }
+
+    // Start reminder scheduler
+    val reminderScheduler: ReminderSchedulerService by inject(ReminderSchedulerService::class.java)
+    reminderScheduler.start()
+    log.info("Reminder scheduler started")
 
     routing {
         get("/") {

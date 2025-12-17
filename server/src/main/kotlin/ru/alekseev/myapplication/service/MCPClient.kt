@@ -68,7 +68,7 @@ class MCPClient(
                 params = null
             )
 
-            val response = sendRequest(initRequest)
+            val response = sendRequestUnsafe(initRequest)
 
             response.error?.let { error ->
                 disconnect()
@@ -140,8 +140,17 @@ class MCPClient(
 
     /**
      * Send a request to the MCP server and wait for response
+     * Protected by mutex to prevent concurrent access to writer/reader
      */
-    private fun sendRequest(request: MCPRequest): MCPResponse {
+    private suspend fun sendRequest(request: MCPRequest): MCPResponse = mutex.withLock {
+        sendRequestUnsafe(request)
+    }
+
+    /**
+     * Internal version of sendRequest without mutex protection.
+     * Use this only when mutex is already held (e.g., inside connect()).
+     */
+    private fun sendRequestUnsafe(request: MCPRequest): MCPResponse {
         val requestJson = json.encodeToString(MCPRequest.serializer(), request)
 
         // Write request

@@ -12,6 +12,13 @@ COPY settings.gradle.kts .
 COPY build.gradle.kts .
 COPY gradle/libs.versions.toml gradle/libs.versions.toml
 
+# Copy build.gradle.kts files for dependency resolution
+COPY shared/build.gradle.kts shared/
+COPY server/build.gradle.kts server/
+COPY mcp-server/build.gradle.kts mcp-server/
+COPY core-common/build.gradle.kts core-common/
+COPY core-network/build.gradle.kts core-network/
+
 # Create gradle home and set permissions
 RUN mkdir -p /home/gradle/.gradle && chown -R gradle:gradle /home/gradle/.gradle
 
@@ -20,6 +27,8 @@ RUN ./gradlew dependencies --no-daemon || true
 
 # Copy source code
 COPY shared shared
+COPY core-common core-common
+COPY core-network core-network
 COPY server server
 COPY mcp-server mcp-server
 

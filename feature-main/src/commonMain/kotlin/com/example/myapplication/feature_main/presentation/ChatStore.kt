@@ -2,6 +2,7 @@
 
 package com.example.myapplication.feature_main.presentation
 
+import com.example.myapplication.feature_main.domain.entity.AlertEntity
 import com.example.myapplication.feature_main.domain.entity.ChatMessage
 import com.example.myapplication.feature_main.domain.entity.ChatMessageState
 import com.example.myapplication.feature_main.domain.usecase.ConnectToChatUseCase
@@ -40,6 +41,7 @@ sealed interface ChatIntent : MVIIntent {
 
 sealed interface ChatAction : MVIAction {
     data class ShowError(val message: String) : ChatAction
+    data class ShowAlert(val alert: AlertEntity) : ChatAction
 }
 
 class ChatStore(
@@ -83,6 +85,10 @@ class ChatStore(
                                 copy(
                                     messages = messageState.messages
                                 )
+                            }
+                            is ChatMessageState.Alert -> {
+                                action(ChatAction.ShowAlert(messageState.alert))
+                                this
                             }
                         }
                     }

@@ -60,12 +60,19 @@ kotlin {
             implementation(libs.ktor.client.websockets)
             implementation(libs.ktor.client.contentNegotiation)
             implementation(libs.ktor.serialization.json)
+
+            //Koin
+            implementation(libs.koin.core)
         }
 
         val androidMain by getting {
             dependencies {
                 // Ktor Client Engine
-                implementation(libs.ktor.client.android)
+                implementation(libs.ktor.client.okhttp)
+                implementation(libs.androidx.core.ktx)
+
+                //Koin
+                implementation(libs.koin.android)
             }
         }
 

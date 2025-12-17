@@ -17,6 +17,8 @@ COPY gradle/libs.versions.toml gradle/libs.versions.toml
 COPY build.gradle.kts .
 COPY shared/build.gradle.kts shared/
 COPY composeApp/build.gradle.kts composeApp/
+COPY core-common/build.gradle.kts core-common/
+COPY core-network/build.gradle.kts core-network/
 COPY feature-main/build.gradle.kts feature-main/
 COPY feature-welcome/build.gradle.kts feature-welcome/
 
@@ -28,6 +30,8 @@ RUN --mount=type=cache,target=/home/gradle/.gradle/caches \
 
 # Copy all source code (this changes frequently, so it's last)
 COPY shared shared
+COPY core-common core-common
+COPY core-network core-network
 COPY feature-main feature-main
 COPY feature-welcome feature-welcome
 COPY composeApp composeApp
