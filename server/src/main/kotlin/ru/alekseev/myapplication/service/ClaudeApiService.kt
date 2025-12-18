@@ -56,9 +56,14 @@ class ClaudeApiService(
      */
     suspend fun initializeMCP() {
         if (!mcpInitialized) {
+            println("Initializing MCP connections...")
             mcpManager.connectAll()
             mcpInitialized = true
             println("MCP Manager initialized")
+
+            // Log available tools
+            val tools = mcpManager.getAllTools()
+            println("Available MCP tools (${tools.size}): ${tools.map { it.name }}")
         }
     }
 

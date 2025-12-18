@@ -120,6 +120,30 @@ val serviceModule = module {
             println("Please place google-calendar-credentials.json in one of the above locations")
         }
 
+        // Configure GitHub MCP Server (Docker-based)
+        val githubToken = System.getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
+        if (githubToken != null && githubToken.isNotEmpty()) {
+            println("Found GitHub token, registering GitHub MCP client")
+
+            val githubClient = MCPClient(
+                name = "github",
+                command = listOf(
+                    "docker", "run", "-i", "--rm",
+                    "-e", "GITHUB_PERSONAL_ACCESS_TOKEN=$githubToken",
+                    "ghcr.io/github/github-mcp-server"
+                ),
+                environment = mapOf(),
+                workingDirectory = projectRoot
+            )
+
+            mcpManager.registerClient("github", githubClient)
+            println("Registered GitHub MCP client")
+        } else {
+            println("WARNING: GITHUB_PERSONAL_ACCESS_TOKEN not found in environment")
+            println("GitHub MCP tools will not be available")
+            println("Please set GITHUB_PERSONAL_ACCESS_TOKEN environment variable")
+        }
+
         mcpManager
     }
 }

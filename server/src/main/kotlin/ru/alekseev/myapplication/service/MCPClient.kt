@@ -28,6 +28,7 @@ class MCPClient(
     private var process: Process? = null
     private var writer: BufferedWriter? = null
     private var reader: BufferedReader? = null
+    private var errorReader: BufferedReader? = null
     private val requestIdCounter = AtomicInteger(0)
     private val mutex = Mutex()
 
@@ -60,12 +61,37 @@ class MCPClient(
             // Setup streams
             writer = BufferedWriter(OutputStreamWriter(process!!.outputStream))
             reader = BufferedReader(InputStreamReader(process!!.inputStream))
+            errorReader = BufferedReader(InputStreamReader(process!!.errorStream))
+
+            // Start a thread to consume stderr to prevent buffer blocking
+            Thread {
+                try {
+                    errorReader?.forEachLine { line ->
+                        System.err.println("[$name stderr] $line")
+                    }
+                } catch (e: Exception) {
+                    System.err.println("[$name] Error reading stderr: ${e.message}")
+                }
+            }.apply {
+                isDaemon = true
+                name = "mcp-$name-stderr-reader"
+                start()
+            }
 
             // Send initialize request
+            val initParams = MCPInitializeParams(
+                protocolVersion = "2024-11-05",
+                capabilities = MCPClientCapabilities(),
+                clientInfo = MCPClientInfo(
+                    name = name,
+                    version = "1.0.0"
+                )
+            )
+
             val initRequest = MCPRequest(
                 id = requestIdCounter.incrementAndGet(),
                 method = "initialize",
-                params = null
+                params = json.encodeToJsonElement(MCPInitializeParams.serializer(), initParams) as kotlinx.serialization.json.JsonObject
             )
 
             val response = sendRequestUnsafe(initRequest)
@@ -98,11 +124,14 @@ class MCPClient(
 
         val response = sendRequest(request)
 
+        println("[$name] tools/list response: $response")
+
         response.error?.let { error ->
             throw Exception("Failed to list tools: ${error.message}")
         }
 
         val result = response.result?.let {
+            println("[$name] tools/list result: $it")
             json.decodeFromJsonElement(MCPListToolsResult.serializer(), it)
         } ?: throw Exception("No result in tools/list response")
 
@@ -158,27 +187,46 @@ class MCPClient(
         writer?.newLine()
         writer?.flush()
 
-        // Read response
-        val responseLine = reader?.readLine()
-            ?: throw Exception("Failed to read response from MCP server")
+        // Read responses until we find the one matching our request ID
+        // Skip notifications (messages with no id or method field)
+        var maxAttempts = 50 // Prevent infinite loop
+        while (maxAttempts-- > 0) {
+            val responseLine = reader?.readLine()
+                ?: throw Exception("Failed to read response from MCP server")
 
-        // Try to parse as JSON, if it fails, it might be an error message from the server
-        return try {
-            json.decodeFromString(MCPResponse.serializer(), responseLine)
-        } catch (e: Exception) {
-            // If parsing fails, the server probably output non-JSON (e.g., OAuth URL)
-            System.err.println("Failed to parse MCP response as JSON: $responseLine")
-            // Return an error response
-            MCPResponse(
-                jsonrpc = "2.0",
-                id = request.id,
-                result = null,
-                error = MCPError(
-                    code = -1,
-                    message = "MCP server returned non-JSON response: ${responseLine.take(100)}"
+            // Try to parse as JSON
+            val response = try {
+                json.decodeFromString(MCPResponse.serializer(), responseLine)
+            } catch (e: Exception) {
+                // If parsing fails, the server probably output non-JSON
+                System.err.println("Failed to parse MCP response as JSON: $responseLine")
+                return MCPResponse(
+                    jsonrpc = "2.0",
+                    id = request.id,
+                    result = null,
+                    error = MCPError(
+                        code = -1,
+                        message = "MCP server returned non-JSON response: ${responseLine.take(100)}"
+                    )
                 )
-            )
+            }
+
+            // Check if this is a notification (no id) - skip it
+            if (response.id == null) {
+                println("[$name] Skipping notification/message: ${responseLine.take(200)}")
+                continue
+            }
+
+            // Check if this response matches our request
+            if (response.id == request.id) {
+                return response
+            }
+
+            // This is a response for a different request - shouldn't happen but log it
+            System.err.println("[$name] Received response for different request ID: ${response.id} (expected ${request.id})")
         }
+
+        throw Exception("Failed to receive matching response from MCP server after $maxAttempts attempts")
     }
 
     /**
@@ -189,6 +237,7 @@ class MCPClient(
             try {
                 writer?.close()
                 reader?.close()
+                errorReader?.close()
                 process?.destroy()
                 process?.waitFor()
             } catch (e: Exception) {
@@ -197,6 +246,7 @@ class MCPClient(
             } finally {
                 writer = null
                 reader = null
+                errorReader = null
                 process = null
                 isConnected = false
             }

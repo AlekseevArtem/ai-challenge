@@ -25,7 +25,7 @@ class ReminderSchedulerService(
     val alertFlow = _alertFlow.asSharedFlow()
 
     companion object {
-        private val SCHEDULE_INTERVAL = 2.minutes
+        private val SCHEDULE_INTERVAL = 90.minutes
     }
 
     /**
@@ -40,10 +40,9 @@ class ReminderSchedulerService(
         System.err.println("[ReminderScheduler] Starting scheduler with interval: $SCHEDULE_INTERVAL")
 
         schedulerJob = scope.launch {
-            // Wait a bit before first execution to allow system to fully initialize
-            delay(30_000) // 30 seconds
-
             while (isActive) {
+                delay(SCHEDULE_INTERVAL)
+
                 try {
                     System.err.println("[ReminderScheduler] Generating reminder summary...")
                     generateAndBroadcastSummary()
@@ -51,8 +50,6 @@ class ReminderSchedulerService(
                     System.err.println("[ReminderScheduler] Error generating summary: ${e.message}")
                     e.printStackTrace()
                 }
-
-                delay(SCHEDULE_INTERVAL)
             }
         }
 

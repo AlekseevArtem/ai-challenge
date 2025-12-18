@@ -18,9 +18,11 @@ services:
       - GOOGLE_CALENDAR_CREDENTIALS_PATH=/app/server/google-calendar-credentials.json
       - GOOGLE_CALENDAR_TOKENS_PATH=/app/server/tokens
       - MCP_HEADLESS=true
+      - GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PERSONAL_ACCESS_TOKEN}
     volumes:
       - chat-data:/home/appuser
       - ./server/tokens:/app/server/tokens
+      - /var/run/docker.sock:/var/run/docker.sock
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]
       interval: 30s

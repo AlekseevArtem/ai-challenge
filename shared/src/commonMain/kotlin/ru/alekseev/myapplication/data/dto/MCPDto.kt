@@ -30,6 +30,25 @@ data class MCPError(
 
 // MCP Protocol Models
 @Serializable
+data class MCPClientInfo(
+    val name: String,
+    val version: String
+)
+
+@Serializable
+data class MCPClientCapabilities(
+    val experimental: JsonObject? = null,
+    val sampling: JsonObject? = null
+)
+
+@Serializable
+data class MCPInitializeParams(
+    val protocolVersion: String = "2024-11-05",
+    val capabilities: MCPClientCapabilities = MCPClientCapabilities(),
+    val clientInfo: MCPClientInfo
+)
+
+@Serializable
 data class MCPServerInfo(
     val name: String,
     val version: String
