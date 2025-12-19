@@ -19,3 +19,7 @@ captures
 node_modules/
 claude-api-key.env
 .claude
+
+# DevOps MCP Server background process files
+devops-mcp-server.pid
+devops-mcp-server.log

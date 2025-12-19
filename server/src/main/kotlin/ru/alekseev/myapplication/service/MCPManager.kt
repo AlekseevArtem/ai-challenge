@@ -6,19 +6,53 @@ import ru.alekseev.myapplication.data.dto.ClaudeTool
 import ru.alekseev.myapplication.data.dto.MCPTool
 
 /**
+ * Common interface for MCP clients (stdio and HTTP)
+ */
+interface IMCPClient {
+    val isConnected: Boolean
+    suspend fun connect(): Any
+    suspend fun listTools(): List<MCPTool>
+    suspend fun callTool(toolName: String, arguments: kotlinx.serialization.json.JsonObject?): ru.alekseev.myapplication.data.dto.MCPCallToolResult
+    suspend fun disconnect()
+}
+
+/**
  * Manager for multiple MCP clients.
  * Handles connecting to MCP servers, collecting tools, and routing tool calls.
  */
 class MCPManager {
-    private val clients = mutableMapOf<String, MCPClient>()
+    private val clients = mutableMapOf<String, IMCPClient>()
     private val toolToClient = mutableMapOf<String, String>()
     private val mutex = Mutex()
 
     /**
-     * Register an MCP client with a unique name
+     * Register a stdio-based MCP client with a unique name
      */
     fun registerClient(name: String, client: MCPClient) {
-        clients[name] = client
+        clients[name] = object : IMCPClient {
+            override val isConnected: Boolean get() = client.isConnected
+            override suspend fun connect() = client.connect()
+            override suspend fun listTools() = client.listTools()
+            override suspend fun callTool(toolName: String, arguments: kotlinx.serialization.json.JsonObject?) =
+                client.callTool(toolName, arguments)
+            override suspend fun disconnect() {
+                client.disconnect()
+            }
+        }
+    }
+
+    /**
+     * Register an HTTP-based MCP client with a unique name
+     */
+    fun registerHttpClient(name: String, client: MCPHttpClient) {
+        clients[name] = object : IMCPClient {
+            override val isConnected: Boolean get() = client.isConnected
+            override suspend fun connect() = client.connect()
+            override suspend fun listTools() = client.listTools()
+            override suspend fun callTool(toolName: String, arguments: kotlinx.serialization.json.JsonObject?) =
+                client.callTool(toolName, arguments)
+            override suspend fun disconnect() = client.disconnect()
+        }
     }
 
     /**

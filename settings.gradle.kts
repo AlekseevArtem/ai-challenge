@@ -35,6 +35,7 @@ plugins {
 include(":composeApp")
 include(":server")
 include(":mcp-server")
+include(":mcp-server-devops")
 include(":shared")
 include(":core-network")
 include(":core-common")

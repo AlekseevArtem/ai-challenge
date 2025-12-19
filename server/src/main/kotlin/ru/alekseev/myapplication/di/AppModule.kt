@@ -144,6 +144,21 @@ val serviceModule = module {
             println("Please set GITHUB_PERSONAL_ACCESS_TOKEN environment variable")
         }
 
+        // Configure DevOps MCP Server (HTTP-based, running on host)
+        // This connects to the DevOps MCP server running on the host machine (Mac)
+        // The server should be started with: ./start-devops-mcp.sh (or ./start-devops-mcp-background.sh)
+        val devopsServerUrl = "http://host.docker.internal:8082"
+        println("Registering DevOps MCP HTTP client at $devopsServerUrl")
+
+        val devopsClient = ru.alekseev.myapplication.service.MCPHttpClient(
+            name = "devops",
+            baseUrl = devopsServerUrl
+        )
+
+        mcpManager.registerHttpClient("devops", devopsClient)
+        println("Registered DevOps MCP HTTP client (will connect when server starts)")
+        println("To start DevOps MCP server on host: ./start-devops-mcp.sh (foreground) or ./start-devops-mcp-background.sh (daemon)")
+
         mcpManager
     }
 }
