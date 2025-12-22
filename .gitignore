@@ -23,3 +23,4 @@ claude-api-key.env
 # DevOps MCP Server background process files
 devops-mcp-server.pid
 devops-mcp-server.log
+/server-doc-indexer/faiss_index/

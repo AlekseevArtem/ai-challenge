@@ -16,6 +16,7 @@ COPY gradle/libs.versions.toml gradle/libs.versions.toml
 COPY shared/build.gradle.kts shared/
 COPY server/build.gradle.kts server/
 COPY mcp-server/build.gradle.kts mcp-server/
+COPY server-doc-indexer/build.gradle.kts server-doc-indexer/
 COPY core-common/build.gradle.kts core-common/
 COPY core-network/build.gradle.kts core-network/
 
@@ -31,6 +32,7 @@ COPY core-common core-common
 COPY core-network core-network
 COPY server server
 COPY mcp-server mcp-server
+COPY server-doc-indexer server-doc-indexer
 
 # Build MCP server first
 RUN ./gradlew :mcp-server:jar --no-daemon --stacktrace

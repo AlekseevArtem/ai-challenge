@@ -30,7 +30,9 @@ import org.koin.java.KoinJavaComponent.inject
 import ru.alekseev.myapplication.core.common.SERVER_PORT
 import ru.alekseev.myapplication.di.appModules
 import ru.alekseev.myapplication.routing.chatRouting
+import ru.alekseev.myapplication.service.DocumentRAGService
 import ru.alekseev.myapplication.service.ReminderSchedulerService
+import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
 fun main() {
@@ -99,6 +101,27 @@ fun Application.module() {
     val reminderScheduler: ReminderSchedulerService by inject(ReminderSchedulerService::class.java)
     reminderScheduler.start()
     log.info("Reminder scheduler started")
+
+    // Initialize Document RAG Service
+    val documentRAGService: DocumentRAGService by inject(DocumentRAGService::class.java)
+    launch {
+        try {
+            log.info("Initializing Document RAG Service...")
+            documentRAGService.initialize()
+            val stats = documentRAGService.getStats()
+            if (stats.isLoaded) {
+                log.info("Document RAG Service initialized successfully")
+                log.info("  - Total vectors: ${stats.totalVectors}")
+                log.info("  - Total files: ${stats.totalFiles}")
+                log.info("  - Indexed at: ${stats.indexedAt}")
+            } else {
+                log.info("Document index not found. RAG will be unavailable.")
+                log.info("To create the index, run: ./gradlew :server-doc-indexer:run")
+            }
+        } catch (e: Exception) {
+            log.error("Failed to initialize Document RAG Service: ${e.message}")
+        }
+    }
 
     routing {
         get("/") {

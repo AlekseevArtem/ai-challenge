@@ -18,6 +18,7 @@ application {
 dependencies {
     implementation(projects.shared)
     implementation(projects.coreCommon)
+    implementation(projects.serverDocIndexer)
     implementation(libs.logback)
 
     // Ktor Server

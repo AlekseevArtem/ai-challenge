@@ -6,6 +6,7 @@ import ru.alekseev.myapplication.data.dto.*
 import ru.alekseev.myapplication.mapper.createMessageInfo
 import ru.alekseev.myapplication.repository.ChatRepository
 import ru.alekseev.myapplication.service.ClaudeApiService
+import ru.alekseev.myapplication.service.DocumentRAGService
 import java.util.UUID
 import kotlin.system.measureTimeMillis
 
@@ -25,6 +26,7 @@ data class ProcessMessageResult(
 class ProcessUserMessageUseCase(
     private val chatRepository: ChatRepository,
     private val claudeApiService: ClaudeApiService,
+    private val documentRAGService: DocumentRAGService,
     private val json: Json
 ) {
     /**
@@ -95,6 +97,7 @@ class ProcessUserMessageUseCase(
     /**
      * Builds the message history for Claude API from summaries and uncompressed messages.
      * Summaries are added as context at the beginning of the conversation.
+     * Also includes RAG context from relevant documents.
      */
     private suspend fun buildMessageHistory(userId: String, currentMessage: String): List<ClaudeMessage> {
         val summaries = chatRepository.getAllSummaries(userId)
@@ -129,6 +132,25 @@ class ProcessUserMessageUseCase(
             messagesForApi.add(
                 ClaudeMessage(role = "assistant", content = ClaudeMessageContent.Text(msg.assistant_message))
             )
+        }
+
+        // Add RAG context from document search
+        if (documentRAGService.isReady()) {
+            val ragContext = documentRAGService.getContextForQuery(currentMessage, topK = 3)
+            if (ragContext.isNotBlank()) {
+                messagesForApi.add(
+                    ClaudeMessage(
+                        role = "user",
+                        content = ClaudeMessageContent.Text(ragContext)
+                    )
+                )
+                messagesForApi.add(
+                    ClaudeMessage(
+                        role = "assistant",
+                        content = ClaudeMessageContent.Text("I understand. I'll use this context from the project codebase to answer your question.")
+                    )
+                )
+            }
         }
 
         // Add current user message

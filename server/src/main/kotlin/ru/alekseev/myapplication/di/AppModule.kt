@@ -8,6 +8,7 @@ import ru.alekseev.myapplication.db.ChatDatabase
 import ru.alekseev.myapplication.repository.ChatRepository
 import ru.alekseev.myapplication.repository.ChatRepositoryImpl
 import ru.alekseev.myapplication.service.ClaudeApiService
+import ru.alekseev.myapplication.service.DocumentRAGService
 import ru.alekseev.myapplication.service.MCPClient
 import ru.alekseev.myapplication.service.MCPManager
 import ru.alekseev.myapplication.service.SummarizationService
@@ -57,6 +58,7 @@ val serviceModule = module {
     single { SummarizationService(get()) }
     single { ReminderSchedulerService(get()) }
     single { WebSocketManager(get(), get()) }
+    single { DocumentRAGService() }
 
     single {
         val mcpManager = MCPManager()
@@ -170,7 +172,7 @@ val repositoryModule = module {
 val useCaseModule = module {
     factory { LoadChatHistoryUseCase(get(), get()) }
     factory { HandleSummarizationUseCase(get(), get()) }
-    factory { ProcessUserMessageUseCase(get(), get(), get()) }
+    factory { ProcessUserMessageUseCase(get(), get(), get(), get()) }
 }
 
 val appModules = listOf(jsonModule, databaseModule, serviceModule, repositoryModule, useCaseModule)
