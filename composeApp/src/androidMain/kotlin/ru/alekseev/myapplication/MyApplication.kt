@@ -2,6 +2,7 @@ package ru.alekseev.myapplication
 
 import android.app.Application
 import com.example.myapplication.feature_main.di.featureMainModule
+import com.example.myapplication.feature_settings.di.featureSettingsModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -17,7 +18,8 @@ class MyApplication : Application() {
             androidContext(this@MyApplication)
             modules(
                 platformModule,
-                featureMainModule
+                featureMainModule,
+                featureSettingsModule
             )
         }
     }

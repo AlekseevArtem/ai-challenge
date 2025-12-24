@@ -9,7 +9,7 @@ interface ChatWebSocketDataSource {
 
     suspend fun disconnect()
 
-    suspend fun sendMessage(message: String)
+    suspend fun sendMessage(message: String, useRag: Boolean = false)
 
     fun observeMessages(): Flow<ChatResponseDto>
 

@@ -5,7 +5,8 @@ data class ChatMessage(
     val content: String,
     val isFromUser: Boolean,
     val timestamp: Long,
-    val messageInfo: MessageInfo? = null
+    val messageInfo: MessageInfo? = null,
+    val usedRag: Boolean? = null
 )
 
 sealed interface ChatMessageState {

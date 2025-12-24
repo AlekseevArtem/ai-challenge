@@ -63,6 +63,9 @@ COPY server/google-calendar-credentials.json /app/server/google-calendar-credent
 # Copy tokens directory (will be empty on first run, populated after OAuth)
 COPY server/tokens /app/server/tokens
 
+# Copy FAISS index files for RAG functionality
+COPY faiss_index /app/faiss_index
+
 # Create a non-root user and home directory
 RUN groupadd -r appgroup && useradd -r -g appgroup -m -d /home/appuser appuser && \
     mkdir -p /home/appuser && \

@@ -19,4 +19,6 @@ interface MainComponent {
     fun onClearError()
 
     fun onMessageClick(message: ChatMessage)
+
+    fun onOpenSettings()
 }

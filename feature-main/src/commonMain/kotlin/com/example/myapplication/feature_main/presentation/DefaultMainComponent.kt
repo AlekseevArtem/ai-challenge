@@ -24,6 +24,7 @@ import pro.respawn.flowmvi.api.Store
 
 class DefaultMainComponent(
     componentContext: ComponentContext,
+    private val onOpenSettings: () -> Unit = {},
 ) : MainComponent, ComponentContext by componentContext, KoinComponent {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -84,6 +85,10 @@ class DefaultMainComponent(
         message.messageInfo?.let { info ->
             messageInfoNavigation.activate(MessageInfoConfig(info))
         }
+    }
+
+    override fun onOpenSettings() {
+        onOpenSettings.invoke()
     }
 
     private fun dismissMessageInfo() {

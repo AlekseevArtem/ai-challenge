@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface ChatRepository {
 
-    suspend fun sendMessage(message: String)
+    suspend fun sendMessage(message: String, useRag: Boolean = false)
 
     fun observeMessages(): Flow<Result<ChatMessageState>>
 

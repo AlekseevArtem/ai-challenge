@@ -23,4 +23,6 @@ object PreviewMainComponent : MainComponent {
     override fun onClearError() {}
 
     override fun onMessageClick(message: ChatMessage) {}
+
+    override fun onOpenSettings() {}
 }

@@ -21,6 +21,7 @@ COPY core-common/build.gradle.kts core-common/
 COPY core-network/build.gradle.kts core-network/
 COPY feature-main/build.gradle.kts feature-main/
 COPY feature-welcome/build.gradle.kts feature-welcome/
+COPY feature-settings/build.gradle.kts feature-settings/
 
 # Download dependencies with cache mount (this layer will be cached)
 # The cache mount persists between builds, significantly speeding up dependency downloads
@@ -34,6 +35,7 @@ COPY core-common core-common
 COPY core-network core-network
 COPY feature-main feature-main
 COPY feature-welcome feature-welcome
+COPY feature-settings feature-settings
 COPY composeApp composeApp
 
 # Build the Wasm distribution with cache mount for build outputs

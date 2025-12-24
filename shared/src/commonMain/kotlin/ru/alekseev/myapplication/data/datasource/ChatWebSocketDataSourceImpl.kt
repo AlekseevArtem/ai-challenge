@@ -53,13 +53,13 @@ class ChatWebSocketDataSourceImpl(
         }
     }
 
-    override suspend fun sendMessage(message: String) {
-        val request = ChatRequestDto(message = message)
+    override suspend fun sendMessage(message: String, useRag: Boolean) {
+        val request = ChatRequestDto(message = message, useRag = useRag)
         val jsonString = try {
             val result = json.encodeToString(request)
             result
         } catch (e: Exception) {
-            val manual = """{"message":"${message.replace("\"", "\\\"")}"}"""
+            val manual = """{"message":"${message.replace("\"", "\\\"")}","useRag":$useRag}"""
             manual
         }
         try {

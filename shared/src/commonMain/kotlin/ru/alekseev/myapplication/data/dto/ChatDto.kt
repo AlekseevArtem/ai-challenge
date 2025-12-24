@@ -19,7 +19,8 @@ data class ChatMessageDto(
     val content: String,
     val sender: MessageSender,
     val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
-    val messageInfo: MessageInfoDto? = null
+    val messageInfo: MessageInfoDto? = null,
+    val usedRag: Boolean? = null
 )
 
 @Serializable
@@ -30,7 +31,8 @@ enum class MessageSender {
 
 @Serializable
 data class ChatRequestDto(
-    val message: String
+    val message: String,
+    val useRag: Boolean = false
 )
 
 @OptIn(ExperimentalSerializationApi::class)

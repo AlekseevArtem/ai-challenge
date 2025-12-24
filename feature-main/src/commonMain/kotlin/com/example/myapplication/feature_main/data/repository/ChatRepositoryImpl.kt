@@ -14,8 +14,8 @@ class ChatRepositoryImpl(
     private val dispatchAlertUseCase: DispatchAlertUseCase,
 ) : ChatRepository {
 
-    override suspend fun sendMessage(message: String) {
-        webSocketDataSource.sendMessage(message)
+    override suspend fun sendMessage(message: String, useRag: Boolean) {
+        webSocketDataSource.sendMessage(message, useRag)
     }
 
     override fun observeMessages(): Flow<Result<ChatMessageState>> {

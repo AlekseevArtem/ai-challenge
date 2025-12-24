@@ -38,14 +38,16 @@ class ProcessUserMessageUseCase(
      *
      * @param userMessageText The message text from the user
      * @param userId The user identifier
+     * @param useRag Whether to use RAG context
      * @return ProcessMessageResult containing both user and assistant message DTOs
      */
     suspend operator fun invoke(
         userMessageText: String,
-        userId: String = ChatConstants.DEFAULT_USER_ID
+        userId: String = ChatConstants.DEFAULT_USER_ID,
+        useRag: Boolean = false
     ): ProcessMessageResult {
         // Build message history for Claude API
-        val messagesForApi = buildMessageHistory(userId, userMessageText)
+        val messagesForApi = buildMessageHistory(userId, userMessageText, useRag)
 
         // Create Claude API request
         val claudeRequest = ClaudeRequest(messages = messagesForApi)
@@ -88,7 +90,8 @@ class ProcessUserMessageUseCase(
             content = responseText,
             sender = MessageSender.ASSISTANT,
             timestamp = currentTimestamp,
-            messageInfo = createMessageInfo(claudeResponse, responseTime)
+            messageInfo = createMessageInfo(claudeResponse, responseTime),
+            usedRag = useRag
         )
 
         return ProcessMessageResult(userMessage, assistantMessage)
@@ -97,9 +100,9 @@ class ProcessUserMessageUseCase(
     /**
      * Builds the message history for Claude API from summaries and uncompressed messages.
      * Summaries are added as context at the beginning of the conversation.
-     * Also includes RAG context from relevant documents.
+     * Also includes RAG context from relevant documents if useRag is true.
      */
-    private suspend fun buildMessageHistory(userId: String, currentMessage: String): List<ClaudeMessage> {
+    private suspend fun buildMessageHistory(userId: String, currentMessage: String, useRag: Boolean): List<ClaudeMessage> {
         val summaries = chatRepository.getAllSummaries(userId)
         val uncompressedMessages = chatRepository.getUncompressedMessages(userId)
 
@@ -134,8 +137,9 @@ class ProcessUserMessageUseCase(
             )
         }
 
-        // Add RAG context from document search
-        if (documentRAGService.isReady()) {
+        // Add RAG context from document search (only if enabled)
+        if (useRag && documentRAGService.isReady()) {
+            println("[ProcessUserMessageUseCase] call rag")
             val ragContext = documentRAGService.getContextForQuery(currentMessage, topK = 3)
             if (ragContext.isNotBlank()) {
                 messagesForApi.add(

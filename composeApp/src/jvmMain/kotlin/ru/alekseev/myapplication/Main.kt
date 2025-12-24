@@ -7,6 +7,7 @@ import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.decompose.extensions.compose.lifecycle.LifecycleController
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.example.myapplication.feature_main.di.featureMainModule
+import com.example.myapplication.feature_settings.di.featureSettingsModule
 import org.koin.core.context.startKoin
 import ru.alekseev.myapplication.di.platformModule
 import ru.alekseev.myapplication.root.DefaultRootComponent
@@ -17,7 +18,8 @@ fun main() {
     startKoin {
         modules(
             platformModule,
-            featureMainModule
+            featureMainModule,
+            featureSettingsModule
         )
     }
 

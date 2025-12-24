@@ -1,6 +1,7 @@
 package ru.alekseev.myapplication
 
 import com.example.myapplication.feature_main.di.featureMainModule
+import com.example.myapplication.feature_settings.di.featureSettingsModule
 import org.koin.core.context.startKoin
 import org.koin.mp.KoinPlatformTools
 import ru.alekseev.myapplication.di.platformModule
@@ -14,7 +15,8 @@ private object KoinInitializer {
         startKoin {
             modules(
                 platformModule,
-                featureMainModule
+                featureMainModule,
+                featureSettingsModule
             )
         }
         true

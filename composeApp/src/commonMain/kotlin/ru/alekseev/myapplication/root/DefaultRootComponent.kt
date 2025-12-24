@@ -6,16 +6,23 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.popTo
+import com.arkivanov.decompose.router.stack.push
+import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.Value
 import com.example.myapplication.feature_main.presentation.DefaultMainComponent
 import com.example.myapplication.feature_main.presentation.MainComponent
+import com.example.myapplication.feature_settings.presentation.DefaultSettingsComponent
+import com.example.myapplication.feature_settings.presentation.SettingsComponent
+import com.example.myapplication.feature_settings.presentation.SettingsStore
 import com.example.myapplication.feature_welcome.presentation.DefaultWelcomeComponent
 import com.example.myapplication.feature_welcome.presentation.WelcomeComponent
 import kotlinx.serialization.Serializable
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 class DefaultRootComponent(
     componentContext: ComponentContext,
-) : RootComponent, ComponentContext by componentContext {
+) : RootComponent, ComponentContext by componentContext, KoinComponent {
 
     private val navigation = StackNavigation<Config>()
 
@@ -32,11 +39,13 @@ class DefaultRootComponent(
         when (config) {
             is Config.Main -> RootComponent.Child.Main(mainComponent(childComponentContext))
             is Config.Welcome -> RootComponent.Child.Welcome(welcomeComponent(childComponentContext))
+            is Config.Settings -> RootComponent.Child.Settings(settingsComponent(childComponentContext))
         }
 
     private fun mainComponent(componentContext: ComponentContext): MainComponent =
         DefaultMainComponent(
             componentContext = componentContext,
+            onOpenSettings = { navigation.pushNew(Config.Settings) },
         )
 
     private fun welcomeComponent(componentContext: ComponentContext): WelcomeComponent =
@@ -44,6 +53,15 @@ class DefaultRootComponent(
             componentContext = componentContext,
             onFinished = navigation::pop,
         )
+
+    private fun settingsComponent(componentContext: ComponentContext): SettingsComponent {
+        val settingsStore: SettingsStore by inject()
+        return DefaultSettingsComponent(
+            componentContext = componentContext,
+            settingsStore = settingsStore,
+            onFinished = navigation::pop,
+        )
+    }
 
     override fun onBackClicked(toIndex: Int) {
         navigation.popTo(index = toIndex)
@@ -56,5 +74,8 @@ class DefaultRootComponent(
 
         @Serializable
         data object Welcome : Config
+
+        @Serializable
+        data object Settings : Config
     }
 }

@@ -3,6 +3,7 @@ package ru.alekseev.myapplication.root
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.example.myapplication.feature_main.presentation.MainComponent
+import com.example.myapplication.feature_settings.presentation.SettingsComponent
 import com.example.myapplication.feature_welcome.presentation.WelcomeComponent
 
 interface RootComponent {
@@ -14,5 +15,6 @@ interface RootComponent {
     sealed class Child {
         class Main(val component: MainComponent) : Child()
         class Welcome(val component: WelcomeComponent) : Child()
+        class Settings(val component: SettingsComponent) : Child()
     }
 }

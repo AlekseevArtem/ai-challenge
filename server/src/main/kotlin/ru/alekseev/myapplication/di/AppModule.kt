@@ -58,7 +58,11 @@ val serviceModule = module {
     single { SummarizationService(get()) }
     single { ReminderSchedulerService(get()) }
     single { WebSocketManager(get(), get()) }
-    single { DocumentRAGService() }
+    single {
+        DocumentRAGService(
+            ollamaUrl = "http://host.docker.internal:11434"
+        )
+    }
 
     single {
         val mcpManager = MCPManager()
@@ -123,6 +127,10 @@ val serviceModule = module {
         }
 
         // Configure GitHub MCP Server (Docker-based)
+        // TEMPORARILY DISABLED due to bug in search_code tool (v0.26.3)
+        // Issue: ToolDependencies not found in context panic
+        // TODO: Re-enable when GitHub fixes the bug
+        /*
         val githubToken = System.getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
         if (githubToken != null && githubToken.isNotEmpty()) {
             println("Found GitHub token, registering GitHub MCP client")
@@ -145,6 +153,8 @@ val serviceModule = module {
             println("GitHub MCP tools will not be available")
             println("Please set GITHUB_PERSONAL_ACCESS_TOKEN environment variable")
         }
+        */
+        println("GitHub MCP client disabled (temporary workaround for search_code bug)")
 
         // Configure DevOps MCP Server (HTTP-based, running on host)
         // This connects to the DevOps MCP server running on the host machine (Mac)

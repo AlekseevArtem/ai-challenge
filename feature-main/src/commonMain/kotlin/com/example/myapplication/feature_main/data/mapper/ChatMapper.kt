@@ -38,7 +38,8 @@ fun ChatMessageDto.toDomain(): ChatMessage {
         content = content,
         isFromUser = sender == MessageSender.USER,
         timestamp = timestamp,
-        messageInfo = messageInfo?.toDomain()
+        messageInfo = messageInfo?.toDomain(),
+        usedRag = usedRag
     )
 }
 
@@ -48,7 +49,8 @@ fun ChatMessage.toDto(): ChatMessageDto {
         content = content,
         sender = if (isFromUser) MessageSender.USER else MessageSender.ASSISTANT,
         timestamp = timestamp,
-        messageInfo = messageInfo?.toDto()
+        messageInfo = messageInfo?.toDto(),
+        usedRag = usedRag
     )
 }
 

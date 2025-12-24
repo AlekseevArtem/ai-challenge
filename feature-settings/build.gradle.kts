@@ -1,11 +1,9 @@
 @file:Suppress("DSL_SCOPE_VIOLATION")
 
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
@@ -32,8 +30,6 @@ kotlin {
             dependencies {
                 // Core
                 api(project(":shared"))
-                api(project(":core-common"))
-                api(project(":feature-settings"))
 
                 // Decompose
                 api(libs.decompose.decompose)
@@ -47,12 +43,6 @@ kotlin {
 
                 // Coroutines
                 implementation(libs.kotlinx.coroutines)
-
-                // Serialization
-                implementation(libs.serialization.json)
-
-                //DateTime
-                implementation(libs.kotlinx.datetime)
             }
         }
     }

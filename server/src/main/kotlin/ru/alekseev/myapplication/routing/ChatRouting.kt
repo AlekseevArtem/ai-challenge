@@ -78,7 +78,7 @@ fun Route.chatRouting() {
                         handleSummarizationUseCase(userId)
 
                         // Process user message and get response
-                        val result = processUserMessageUseCase(request.message, userId)
+                        val result = processUserMessageUseCase(request.message, userId, request.useRag)
 
                         // Send user message
                         send(

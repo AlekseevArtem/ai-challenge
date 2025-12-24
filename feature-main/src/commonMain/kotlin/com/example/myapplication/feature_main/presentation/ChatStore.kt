@@ -8,6 +8,7 @@ import com.example.myapplication.feature_main.domain.entity.ChatMessageState
 import com.example.myapplication.feature_main.domain.usecase.ConnectToChatUseCase
 import com.example.myapplication.feature_main.domain.usecase.ObserveMessagesUseCase
 import com.example.myapplication.feature_main.domain.usecase.SendMessageUseCase
+import com.example.myapplication.feature_settings.domain.usecase.GetSettingsUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -29,7 +30,8 @@ data class ChatState(
     val messages: List<ChatMessage> = emptyList(),
     val currentMessage: String = "",
     val error: String? = null,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val ragEnabled: Boolean = false
 ) : MVIState
 
 sealed interface ChatIntent : MVIIntent {
@@ -48,6 +50,7 @@ class ChatStore(
     private val sendMessageUseCase: SendMessageUseCase,
     private val observeMessagesUseCase: ObserveMessagesUseCase,
     private val connectToChatUseCase: ConnectToChatUseCase,
+    private val getSettingsUseCase: GetSettingsUseCase,
 ) : Container<ChatState, ChatIntent, ChatAction> {
 
     override val store: Store<ChatState, ChatIntent, ChatAction> = store(ChatState()) {
@@ -64,6 +67,13 @@ class ChatStore(
         init {
             // Connect to chat on start
             connectToChatUseCase()
+
+            // Observe settings to track RAG state
+            getSettingsUseCase().onEach { settings ->
+                updateState {
+                    copy(ragEnabled = settings.ragEnabled)
+                }
+            }.launchIn(CoroutineScope(coroutineContext))
 
             // Observe messages
             observeMessagesUseCase().onEach { result ->
@@ -121,7 +131,10 @@ class ChatStore(
                         timestamp = Clock.System.now().toEpochMilliseconds(),
                     )
 
+                    // Capture current RAG setting from state
+                    var currentRagEnabled = false
                     updateState {
+                        currentRagEnabled = ragEnabled
                         copy(
                             messages = messages,
                             currentMessage = "",
@@ -129,8 +142,8 @@ class ChatStore(
                         )
                     }
 
-                    // Send message to server
-                    sendMessageUseCase(messageText)
+                    // Send message to server with current RAG setting
+                    sendMessageUseCase(messageText, currentRagEnabled)
                 }
 
                 is ChatIntent.ClearError -> updateState {

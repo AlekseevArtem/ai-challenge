@@ -27,10 +27,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -138,6 +140,19 @@ internal fun MainContent(
                             color = Color.White,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    // Settings button on the right
+                    IconButton(
+                        onClick = component::onOpenSettings,
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
@@ -251,12 +266,24 @@ private fun MessageBubble(
                                 )
                             )
                         } else {
-                            Brush.horizontalGradient(
-                                colors = listOf(
-                                    Color(0xFF2C2C54),
-                                    Color(0xFF3A3A6B)
+                            // Different gradient for RAG-enabled vs RAG-disabled responses
+                            if (message.usedRag == true) {
+                                // RAG enabled - green gradient
+                                Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color(0xFF1B5E20),
+                                        Color(0xFF2E7D32)
+                                    )
                                 )
-                            )
+                            } else {
+                                // RAG disabled - default purple gradient
+                                Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color(0xFF2C2C54),
+                                        Color(0xFF3A3A6B)
+                                    )
+                                )
+                            }
                         }
                     )
                     .padding(12.dp)

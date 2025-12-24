@@ -76,6 +76,7 @@ kotlin {
             // Feature modules
             implementation(project(":feature-main"))
             implementation(project(":feature-welcome"))
+            implementation(project(":feature-settings"))
         }
         androidMain.dependencies {
             implementation(compose.preview)

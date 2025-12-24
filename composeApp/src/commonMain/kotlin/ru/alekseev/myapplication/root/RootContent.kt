@@ -14,6 +14,7 @@ import com.arkivanov.decompose.extensions.compose.stack.animation.plus
 import com.arkivanov.decompose.extensions.compose.stack.animation.scale
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import ru.alekseev.myapplication.main.MainContent
+import ru.alekseev.myapplication.settings.SettingsContent
 import ru.alekseev.myapplication.welcome.WelcomeContent
 
 @Composable
@@ -31,6 +32,7 @@ fun RootContent(
                 when (val instance = it.instance) {
                     is RootComponent.Child.Main -> MainContent(component = instance.component)
                     is RootComponent.Child.Welcome -> WelcomeContent(component = instance.component)
+                    is RootComponent.Child.Settings -> SettingsContent(component = instance.component)
                 }
             }
         }

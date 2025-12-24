@@ -46,9 +46,15 @@ class ClaudeApiService(
     private var mcpInitialized = false
 
     private fun loadApiKey(): String {
-        System.getenv("ANTHROPIC_API_KEY")?.takeIf { it.isNotBlank() }?.let { return it }
-
-        return ""
+        println("[ClaudeApiService] Loading API key from environment...")
+        val key = System.getenv("ANTHROPIC_API_KEY")?.takeIf { it.isNotBlank() }
+        if (key != null) {
+            println("[ClaudeApiService] API key loaded successfully (length: ${key.length})")
+            return key
+        } else {
+            println("[ClaudeApiService] WARNING: API key not found or empty!")
+            return ""
+        }
     }
 
     /**
@@ -56,14 +62,22 @@ class ClaudeApiService(
      */
     suspend fun initializeMCP() {
         if (!mcpInitialized) {
-            println("Initializing MCP connections...")
-            mcpManager.connectAll()
-            mcpInitialized = true
-            println("MCP Manager initialized")
+            println("[ClaudeApiService] Initializing MCP connections...")
+            try {
+                mcpManager.connectAll()
+                mcpInitialized = true
+                println("[ClaudeApiService] MCP Manager initialized successfully")
 
-            // Log available tools
-            val tools = mcpManager.getAllTools()
-            println("Available MCP tools (${tools.size}): ${tools.map { it.name }}")
+                // Log available tools
+                val tools = mcpManager.getAllTools()
+                println("[ClaudeApiService] Available MCP tools (${tools.size}): ${tools.map { it.name }}")
+            } catch (e: Exception) {
+                println("[ClaudeApiService] ERROR: Failed to initialize MCP: ${e.message}")
+                e.printStackTrace()
+                throw e
+            }
+        } else {
+            println("[ClaudeApiService] MCP already initialized, skipping...")
         }
     }
 
@@ -71,34 +85,53 @@ class ClaudeApiService(
      * Get available MCP tools
      */
     suspend fun getMCPTools(): List<ClaudeTool> {
+        println("[ClaudeApiService] Getting MCP tools...")
         if (!mcpInitialized) {
+            println("[ClaudeApiService] MCP not initialized, initializing now...")
             initializeMCP()
         }
-        return mcpManager.getAllTools()
+        val tools = mcpManager.getAllTools()
+        println("[ClaudeApiService] Retrieved ${tools.size} MCP tools")
+        return tools
     }
 
     /**
      * Send a message to Claude API with MCP tools and handle tool calls
      */
     suspend fun sendMessage(request: ClaudeRequest): ClaudeResponse {
+        println("[ClaudeApiService] sendMessage called")
+        println("[ClaudeApiService] Request details: model=${request.model}, max_tokens=${request.maxTokens}, messages=${request.messages.size}")
+
         // Ensure MCP is initialized
         if (!mcpInitialized) {
+            println("[ClaudeApiService] MCP not initialized, initializing...")
             initializeMCP()
         }
 
         // Add MCP tools to the request if not already present
         val requestWithTools = if (request.tools == null) {
+            println("[ClaudeApiService] Adding MCP tools to request...")
             val mcpTools = mcpManager.getAllTools()
+            println("[ClaudeApiService] Added ${mcpTools.size} MCP tools to request")
             request.copy(tools = mcpTools)
         } else {
+            println("[ClaudeApiService] Request already has ${request.tools?.size ?: 0} tools")
             request
         }
 
         // Send initial request
         var currentRequest = requestWithTools
         val conversationMessages = request.messages.toMutableList()
+        var iterationCount = 0
+
+        println("[ClaudeApiService] Starting conversation loop...")
 
         while (true) {
+            iterationCount++
+            println("[ClaudeApiService] ===== Iteration $iterationCount =====")
+            println("[ClaudeApiService] Sending request to Claude API...")
+            println("[ClaudeApiService] Current conversation has ${conversationMessages.size} messages")
+
             val response = try {
                 val httpResponse = httpClient.post("https://api.anthropic.com/v1/messages") {
                     header("x-api-key", apiKey)
@@ -107,23 +140,33 @@ class ClaudeApiService(
                     setBody(currentRequest)
                 }
 
-                httpResponse.body<ClaudeResponse>()
+                println("[ClaudeApiService] Received HTTP response with status: ${httpResponse.status}")
+                val claudeResponse = httpResponse.body<ClaudeResponse>()
+                println("[ClaudeApiService] Response parsed successfully")
+                println("[ClaudeApiService] Response details: id=${claudeResponse.id}, model=${claudeResponse.model}, stop_reason=${claudeResponse.stopReason}")
+                println("[ClaudeApiService] Response content blocks: ${claudeResponse.content?.size ?: 0}")
+                claudeResponse
             } catch (e: Exception) {
+                println("[ClaudeApiService] ERROR: Failed to call Claude API: ${e.message}")
+                e.printStackTrace()
                 throw Exception("Failed to call Claude API: ${e.message}", e)
             }
 
             // Check if response contains tool_use
             val toolUses = response.content?.filter { it.type == "tool_use" } ?: emptyList()
+            println("[ClaudeApiService] Found ${toolUses.size} tool_use blocks in response")
 
             if (toolUses.isEmpty() || response.stopReason != "tool_use") {
                 // No tool calls, return the response
-                println("No more tool calls. Stop reason: ${response.stopReason}")
+                println("[ClaudeApiService] No more tool calls. Stop reason: ${response.stopReason}")
+                println("[ClaudeApiService] Returning final response after $iterationCount iteration(s)")
                 return response
             }
 
-            println("Received ${toolUses.size} tool use(s): ${toolUses.map { it.name }}")
+            println("[ClaudeApiService] Processing ${toolUses.size} tool use(s): ${toolUses.map { it.name }}")
 
             // Add assistant's response to conversation
+            println("[ClaudeApiService] Adding assistant response to conversation history")
             conversationMessages.add(
                 ClaudeMessage(
                     role = "assistant",
@@ -132,16 +175,31 @@ class ClaudeApiService(
             )
 
             // Execute tool calls
+            println("[ClaudeApiService] Executing ${toolUses.size} tool call(s)...")
             val toolResults = mutableListOf<ClaudeContent>()
-            for (toolUse in toolUses) {
-                val toolName = toolUse.name ?: continue
+            for ((index, toolUse) in toolUses.withIndex()) {
+                val toolName = toolUse.name
                 val toolInput = toolUse.input
-                val toolUseId = toolUse.id ?: continue
+                val toolUseId = toolUse.id
+
+                if (toolName == null || toolUseId == null) {
+                    println("[ClaudeApiService] WARNING: Tool use ${index + 1} missing name or id, skipping")
+                    continue
+                }
 
                 try {
-                    println("Calling tool: $toolName with input: $toolInput")
+                    println("[ClaudeApiService] [${index + 1}/${toolUses.size}] Calling tool: $toolName")
+                    println("[ClaudeApiService] Tool input: $toolInput")
+
                     val result = mcpManager.callTool(toolName, toolInput)
-                    println("Tool $toolName returned: ${result.take(200)}${if (result.length > 200) "..." else ""}")
+                    val truncatedResult = if (result.length > 200) {
+                        "${result.take(200)}... (${result.length} chars total)"
+                    } else {
+                        result
+                    }
+                    println("[ClaudeApiService] Tool $toolName completed successfully")
+                    println("[ClaudeApiService] Tool result: $truncatedResult")
+
                     toolResults.add(
                         ClaudeContent(
                             type = "tool_result",
@@ -150,7 +208,7 @@ class ClaudeApiService(
                         )
                     )
                 } catch (e: Exception) {
-                    println("Tool $toolName failed with error: ${e.message}")
+                    println("[ClaudeApiService] ERROR: Tool $toolName failed with error: ${e.message}")
                     e.printStackTrace()
                     toolResults.add(
                         ClaudeContent(
@@ -164,6 +222,7 @@ class ClaudeApiService(
             }
 
             // Add tool results to conversation
+            println("[ClaudeApiService] Adding ${toolResults.size} tool result(s) to conversation")
             conversationMessages.add(
                 ClaudeMessage(
                     role = "user",
@@ -172,11 +231,14 @@ class ClaudeApiService(
             )
 
             // Continue conversation with tool results
+            println("[ClaudeApiService] Continuing conversation with updated messages")
             currentRequest = currentRequest.copy(messages = conversationMessages)
         }
     }
 
     fun close() {
+        println("[ClaudeApiService] Closing HTTP client...")
         httpClient.close()
+        println("[ClaudeApiService] HTTP client closed")
     }
 }

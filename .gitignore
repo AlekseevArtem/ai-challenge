@@ -24,3 +24,5 @@ claude-api-key.env
 devops-mcp-server.pid
 devops-mcp-server.log
 /server-doc-indexer/faiss_index/
+/faiss_index/
+/faiss_index/
