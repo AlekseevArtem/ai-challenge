@@ -8,6 +8,7 @@ import com.example.myapplication.feature_main.domain.entity.ChatMessageState
 import com.example.myapplication.feature_main.domain.usecase.ConnectToChatUseCase
 import com.example.myapplication.feature_main.domain.usecase.ObserveMessagesUseCase
 import com.example.myapplication.feature_main.domain.usecase.SendMessageUseCase
+import ru.alekseev.myapplication.domain.entity.RagMode
 import com.example.myapplication.feature_settings.domain.usecase.GetSettingsUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
@@ -31,7 +32,7 @@ data class ChatState(
     val currentMessage: String = "",
     val error: String? = null,
     val isLoading: Boolean = false,
-    val ragEnabled: Boolean = false
+    val ragMode: RagMode = RagMode.Disabled
 ) : MVIState
 
 sealed interface ChatIntent : MVIIntent {
@@ -68,10 +69,10 @@ class ChatStore(
             // Connect to chat on start
             connectToChatUseCase()
 
-            // Observe settings to track RAG state
+            // Observe settings to track RAG mode
             getSettingsUseCase().onEach { settings ->
                 updateState {
-                    copy(ragEnabled = settings.ragEnabled)
+                    copy(ragMode = settings.ragMode)
                 }
             }.launchIn(CoroutineScope(coroutineContext))
 
@@ -131,10 +132,10 @@ class ChatStore(
                         timestamp = Clock.System.now().toEpochMilliseconds(),
                     )
 
-                    // Capture current RAG setting from state
-                    var currentRagEnabled = false
+                    // Capture current RAG mode from state
+                    var currentRagMode: RagMode = RagMode.Disabled
                     updateState {
-                        currentRagEnabled = ragEnabled
+                        currentRagMode = ragMode
                         copy(
                             messages = messages,
                             currentMessage = "",
@@ -142,8 +143,8 @@ class ChatStore(
                         )
                     }
 
-                    // Send message to server with current RAG setting
-                    sendMessageUseCase(messageText, currentRagEnabled)
+                    // Send message to server with current RAG mode
+                    sendMessageUseCase(messageText, currentRagMode)
                 }
 
                 is ChatIntent.ClearError -> updateState {

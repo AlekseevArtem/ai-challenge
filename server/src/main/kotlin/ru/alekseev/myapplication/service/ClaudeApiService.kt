@@ -3,6 +3,7 @@ package ru.alekseev.myapplication.service
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.DEFAULT
@@ -13,8 +14,10 @@ import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import ru.alekseev.myapplication.data.dto.*
@@ -96,6 +99,87 @@ class ClaudeApiService(
     }
 
     /**
+     * Execute Claude API request with retry on 429 errors
+     */
+    private suspend fun executeWithRetry(
+        request: ClaudeRequest,
+        maxRetries: Int = 3
+    ): ClaudeResponse {
+        var attempt = 0
+
+        while (true) {
+            attempt++
+            try {
+                val httpResponse = httpClient.post("https://api.anthropic.com/v1/messages") {
+                    header("x-api-key", apiKey)
+                    header("anthropic-version", "2023-06-01")
+                    contentType(ContentType.Application.Json)
+                    setBody(request)
+                }
+
+                println("[ClaudeApiService] Received HTTP response with status: ${httpResponse.status}")
+
+                // Check status code before parsing
+                when (httpResponse.status) {
+                    HttpStatusCode.OK -> {
+                        // Success - parse and return
+                        val claudeResponse = httpResponse.body<ClaudeResponse>()
+                        println("[ClaudeApiService] Response parsed successfully")
+                        println("[ClaudeApiService] Response details: id=${claudeResponse.id}, model=${claudeResponse.model}, stop_reason=${claudeResponse.stopReason}")
+                        println("[ClaudeApiService] Response content blocks: ${claudeResponse.content?.size ?: 0}")
+                        return claudeResponse
+                    }
+
+                    HttpStatusCode.TooManyRequests -> {
+                        // Rate limit - retry with backoff
+                        println("[ClaudeApiService] Rate limit exceeded (429). Attempt $attempt/$maxRetries")
+
+                        if (attempt >= maxRetries) {
+                            println("[ClaudeApiService] Max retries reached, throwing exception")
+                            throw Exception("Rate limit exceeded after $maxRetries attempts")
+                        }
+
+                        // Get retry-after header (in seconds) or use exponential backoff
+                        val retryAfter = httpResponse.headers["retry-after"]?.toLongOrNull()
+                        val waitTimeMs = if (retryAfter != null) {
+                            retryAfter * 1000
+                        } else {
+                            // Exponential backoff: 2^attempt seconds
+                            (1L shl attempt) * 1000
+                        }
+
+                        println("[ClaudeApiService] Waiting ${waitTimeMs / 1000}s before retry...")
+                        delay(waitTimeMs)
+                        println("[ClaudeApiService] Retrying request...")
+                        continue
+                    }
+
+                    else -> {
+                        // Other error - throw exception
+                        val errorBody = try {
+                            httpResponse.body<String>()
+                        } catch (e: Exception) {
+                            "Unable to read error body"
+                        }
+                        println("[ClaudeApiService] ERROR: HTTP ${httpResponse.status.value}: $errorBody")
+                        throw Exception("Claude API request failed with status ${httpResponse.status}: $errorBody")
+                    }
+                }
+
+            } catch (e: ClientRequestException) {
+                // This shouldn't happen anymore since we check status above,
+                // but keep as fallback
+                println("[ClaudeApiService] ERROR: ClientRequestException: ${e.message}")
+                throw Exception("Failed to call Claude API: ${e.message}", e)
+            } catch (e: Exception) {
+                println("[ClaudeApiService] ERROR: Failed to call Claude API: ${e.message}")
+                e.printStackTrace()
+                throw Exception("Failed to call Claude API: ${e.message}", e)
+            }
+        }
+    }
+
+    /**
      * Send a message to Claude API with MCP tools and handle tool calls
      */
     suspend fun sendMessage(request: ClaudeRequest): ClaudeResponse {
@@ -132,25 +216,7 @@ class ClaudeApiService(
             println("[ClaudeApiService] Sending request to Claude API...")
             println("[ClaudeApiService] Current conversation has ${conversationMessages.size} messages")
 
-            val response = try {
-                val httpResponse = httpClient.post("https://api.anthropic.com/v1/messages") {
-                    header("x-api-key", apiKey)
-                    header("anthropic-version", "2023-06-01")
-                    contentType(ContentType.Application.Json)
-                    setBody(currentRequest)
-                }
-
-                println("[ClaudeApiService] Received HTTP response with status: ${httpResponse.status}")
-                val claudeResponse = httpResponse.body<ClaudeResponse>()
-                println("[ClaudeApiService] Response parsed successfully")
-                println("[ClaudeApiService] Response details: id=${claudeResponse.id}, model=${claudeResponse.model}, stop_reason=${claudeResponse.stopReason}")
-                println("[ClaudeApiService] Response content blocks: ${claudeResponse.content?.size ?: 0}")
-                claudeResponse
-            } catch (e: Exception) {
-                println("[ClaudeApiService] ERROR: Failed to call Claude API: ${e.message}")
-                e.printStackTrace()
-                throw Exception("Failed to call Claude API: ${e.message}", e)
-            }
+            val response = executeWithRetry(currentRequest)
 
             // Check if response contains tool_use
             val toolUses = response.content?.filter { it.type == "tool_use" } ?: emptyList()

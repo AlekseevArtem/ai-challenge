@@ -1,11 +1,6 @@
 package ru.alekseev.myapplication.data.datasource
 
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.client.plugins.websocket.pingInterval
 import io.ktor.client.plugins.websocket.webSocketSession
-import io.ktor.serialization.kotlinx.json.json
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
@@ -21,6 +16,8 @@ import kotlinx.serialization.json.Json
 import ru.alekseev.myapplication.core.common.SERVER_WS_URL
 import ru.alekseev.myapplication.data.dto.ChatRequestDto
 import ru.alekseev.myapplication.data.dto.ChatResponseDto
+import ru.alekseev.myapplication.data.dto.RagModeDto
+import ru.alekseev.myapplication.domain.entity.RagMode
 
 class ChatWebSocketDataSourceImpl(
     private val json: Json,
@@ -53,18 +50,25 @@ class ChatWebSocketDataSourceImpl(
         }
     }
 
-    override suspend fun sendMessage(message: String, useRag: Boolean) {
-        val request = ChatRequestDto(message = message, useRag = useRag)
+    override suspend fun sendMessage(message: String, ragMode: RagMode) {
+        val ragModeDto = when (ragMode) {
+            is RagMode.Disabled -> RagModeDto.Disabled
+            is RagMode.Enabled -> RagModeDto.Enabled
+            is RagMode.EnabledWithFiltering -> RagModeDto.EnabledWithFiltering(ragMode.threshold)
+        }
+
+        val request = ChatRequestDto(message = message, ragMode = ragModeDto)
         val jsonString = try {
-            val result = json.encodeToString(request)
-            result
+            json.encodeToString(ChatRequestDto.serializer(), request)
         } catch (e: Exception) {
-            val manual = """{"message":"${message.replace("\"", "\\\"")}","useRag":$useRag}"""
-            manual
+            println("[ChatWebSocket] Failed to encode request: ${e.message}")
+            e.printStackTrace()
+            return
         }
         try {
             session?.send(Frame.Text(jsonString))
         } catch (e: Exception) {
+            println("[ChatWebSocket] Failed to send message: ${e.message}")
             e.printStackTrace()
         }
     }

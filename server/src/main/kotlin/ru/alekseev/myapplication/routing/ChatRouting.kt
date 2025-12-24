@@ -11,6 +11,7 @@ import kotlinx.serialization.json.Json
 import org.koin.java.KoinJavaComponent.inject
 import ru.alekseev.myapplication.core.common.ChatConstants
 import ru.alekseev.myapplication.data.dto.*
+import ru.alekseev.myapplication.domain.model.RagMode
 import ru.alekseev.myapplication.usecase.HandleSummarizationUseCase
 import ru.alekseev.myapplication.usecase.LoadChatHistoryUseCase
 import ru.alekseev.myapplication.usecase.ProcessUserMessageUseCase
@@ -77,8 +78,15 @@ fun Route.chatRouting() {
                         // Handle summarization if needed
                         handleSummarizationUseCase(userId)
 
+                        // Convert RagModeDto to domain RagMode
+                        val ragMode = when (val dto = request.ragMode) {
+                            is RagModeDto.Disabled -> RagMode.Disabled
+                            is RagModeDto.Enabled -> RagMode.Enabled
+                            is RagModeDto.EnabledWithFiltering -> RagMode.EnabledWithFiltering(dto.threshold)
+                        }
+
                         // Process user message and get response
-                        val result = processUserMessageUseCase(request.message, userId, request.useRag)
+                        val result = processUserMessageUseCase(request.message, userId, ragMode)
 
                         // Send user message
                         send(

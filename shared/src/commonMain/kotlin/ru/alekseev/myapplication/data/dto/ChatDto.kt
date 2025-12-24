@@ -30,9 +30,24 @@ enum class MessageSender {
 }
 
 @Serializable
+sealed interface RagModeDto {
+    @Serializable
+    @SerialName("disabled")
+    data object Disabled : RagModeDto
+
+    @Serializable
+    @SerialName("enabled")
+    data object Enabled : RagModeDto
+
+    @Serializable
+    @SerialName("enabled_with_filtering")
+    data class EnabledWithFiltering(val threshold: Float) : RagModeDto
+}
+
+@Serializable
 data class ChatRequestDto(
     val message: String,
-    val useRag: Boolean = false
+    val ragMode: RagModeDto = RagModeDto.Disabled
 )
 
 @OptIn(ExperimentalSerializationApi::class)

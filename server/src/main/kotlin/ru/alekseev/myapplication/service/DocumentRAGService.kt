@@ -8,6 +8,7 @@ import ru.alekseev.indexer.data.mcp.MCPClient
 import ru.alekseev.indexer.data.ollama.OllamaClient
 import ru.alekseev.indexer.domain.models.IndexMetadata
 import ru.alekseev.indexer.domain.pipeline.IndexingPipeline
+import ru.alekseev.myapplication.domain.rag.ChunkRelevanceFilter
 import java.io.File
 
 /**
@@ -64,8 +65,15 @@ class DocumentRAGService(
 
     /**
      * Search for relevant documents based on a query
+     * @param query The search query
+     * @param topK Number of top results to return
+     * @param filter Optional relevance filter to apply to results
      */
-    suspend fun search(query: String, topK: Int = 5): List<SearchResult> {
+    suspend fun search(
+        query: String,
+        topK: Int = 5,
+        filter: ChunkRelevanceFilter? = null
+    ): List<SearchResult> {
         if (!isIndexLoaded) {
             println("[DocumentRAGService] Index not loaded, returning empty results")
             return emptyList()
@@ -80,7 +88,7 @@ class DocumentRAGService(
                 val results = vectorIndex.search(queryEmbedding, topK)
 
                 // Convert to SearchResult with chunk content from metadata
-                results.mapNotNull { result ->
+                val searchResults = results.mapNotNull { result ->
                     val chunkMetadata = metadata?.chunks?.find { it.chunkId == result.id }
                     if (chunkMetadata != null) {
                         SearchResult(
@@ -95,6 +103,9 @@ class DocumentRAGService(
                         null
                     }
                 }
+
+                // Apply filter if provided
+                filter?.filter(searchResults) ?: searchResults
             } catch (e: Exception) {
                 println("[DocumentRAGService] Search failed: ${e.message}")
                 emptyList()
@@ -104,9 +115,16 @@ class DocumentRAGService(
 
     /**
      * Get context string from search results to add to Claude prompt
+     * @param query The search query
+     * @param topK Number of top results to return
+     * @param filter Optional relevance filter to apply to results
      */
-    suspend fun getContextForQuery(query: String, topK: Int = 5): String {
-        val results = search(query, topK)
+    suspend fun getContextForQuery(
+        query: String,
+        topK: Int = 5,
+        filter: ChunkRelevanceFilter? = null
+    ): String {
+        val results = search(query, topK, filter)
 
         if (results.isEmpty()) {
             return ""

@@ -3,6 +3,8 @@ package ru.alekseev.myapplication.usecase
 import kotlinx.serialization.json.Json
 import ru.alekseev.myapplication.core.common.ChatConstants
 import ru.alekseev.myapplication.data.dto.*
+import ru.alekseev.myapplication.domain.model.RagMode
+import ru.alekseev.myapplication.domain.rag.SimilarityThresholdFilter
 import ru.alekseev.myapplication.mapper.createMessageInfo
 import ru.alekseev.myapplication.repository.ChatRepository
 import ru.alekseev.myapplication.service.ClaudeApiService
@@ -38,16 +40,16 @@ class ProcessUserMessageUseCase(
      *
      * @param userMessageText The message text from the user
      * @param userId The user identifier
-     * @param useRag Whether to use RAG context
+     * @param ragMode The RAG mode to use (Disabled, Enabled, or EnabledWithFiltering)
      * @return ProcessMessageResult containing both user and assistant message DTOs
      */
     suspend operator fun invoke(
         userMessageText: String,
         userId: String = ChatConstants.DEFAULT_USER_ID,
-        useRag: Boolean = false
+        ragMode: RagMode = RagMode.Disabled
     ): ProcessMessageResult {
         // Build message history for Claude API
-        val messagesForApi = buildMessageHistory(userId, userMessageText, useRag)
+        val messagesForApi = buildMessageHistory(userId, userMessageText, ragMode)
 
         // Create Claude API request
         val claudeRequest = ClaudeRequest(messages = messagesForApi)
@@ -91,7 +93,7 @@ class ProcessUserMessageUseCase(
             sender = MessageSender.ASSISTANT,
             timestamp = currentTimestamp,
             messageInfo = createMessageInfo(claudeResponse, responseTime),
-            usedRag = useRag
+            usedRag = ragMode !is RagMode.Disabled
         )
 
         return ProcessMessageResult(userMessage, assistantMessage)
@@ -100,9 +102,9 @@ class ProcessUserMessageUseCase(
     /**
      * Builds the message history for Claude API from summaries and uncompressed messages.
      * Summaries are added as context at the beginning of the conversation.
-     * Also includes RAG context from relevant documents if useRag is true.
+     * Also includes RAG context from relevant documents based on the RAG mode.
      */
-    private suspend fun buildMessageHistory(userId: String, currentMessage: String, useRag: Boolean): List<ClaudeMessage> {
+    private suspend fun buildMessageHistory(userId: String, currentMessage: String, ragMode: RagMode): List<ClaudeMessage> {
         val summaries = chatRepository.getAllSummaries(userId)
         val uncompressedMessages = chatRepository.getUncompressedMessages(userId)
 
@@ -137,23 +139,55 @@ class ProcessUserMessageUseCase(
             )
         }
 
-        // Add RAG context from document search (only if enabled)
-        if (useRag && documentRAGService.isReady()) {
-            println("[ProcessUserMessageUseCase] call rag")
-            val ragContext = documentRAGService.getContextForQuery(currentMessage, topK = 3)
-            if (ragContext.isNotBlank()) {
-                messagesForApi.add(
-                    ClaudeMessage(
-                        role = "user",
-                        content = ClaudeMessageContent.Text(ragContext)
-                    )
-                )
-                messagesForApi.add(
-                    ClaudeMessage(
-                        role = "assistant",
-                        content = ClaudeMessageContent.Text("I understand. I'll use this context from the project codebase to answer your question.")
-                    )
-                )
+        // Add RAG context from document search based on mode
+        when (ragMode) {
+            is RagMode.Disabled -> {
+                // No RAG context
+            }
+            is RagMode.Enabled -> {
+                // RAG without filtering
+                if (documentRAGService.isReady()) {
+                    println("[ProcessUserMessageUseCase] RAG enabled without filtering")
+                    val ragContext = documentRAGService.getContextForQuery(currentMessage, topK = 3, filter = null)
+                    if (ragContext.isNotBlank()) {
+                        messagesForApi.add(
+                            ClaudeMessage(
+                                role = "user",
+                                content = ClaudeMessageContent.Text(ragContext)
+                            )
+                        )
+                        messagesForApi.add(
+                            ClaudeMessage(
+                                role = "assistant",
+                                content = ClaudeMessageContent.Text("I understand. I'll use this context from the project codebase to answer your question.")
+                            )
+                        )
+                    }
+                }
+            }
+            is RagMode.EnabledWithFiltering -> {
+                // RAG with similarity threshold filtering
+                if (documentRAGService.isReady()) {
+                    println("[ProcessUserMessageUseCase] RAG enabled with filtering (threshold: ${ragMode.threshold})")
+                    val filter = SimilarityThresholdFilter(ragMode.threshold)
+                    val ragContext = documentRAGService.getContextForQuery(currentMessage, topK = 3, filter = filter)
+                    if (ragContext.isNotBlank()) {
+                        messagesForApi.add(
+                            ClaudeMessage(
+                                role = "user",
+                                content = ClaudeMessageContent.Text(ragContext)
+                            )
+                        )
+                        messagesForApi.add(
+                            ClaudeMessage(
+                                role = "assistant",
+                                content = ClaudeMessageContent.Text("I understand. I'll use this filtered context from the project codebase to answer your question.")
+                            )
+                        )
+                    } else {
+                        println("[ProcessUserMessageUseCase] No chunks passed the similarity threshold, proceeding without RAG context")
+                    }
+                }
             }
         }
 

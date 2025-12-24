@@ -4,6 +4,7 @@ import com.example.myapplication.feature_main.data.mapper.toDomain
 import com.example.myapplication.feature_main.domain.entity.ChatMessageState
 import com.example.myapplication.feature_main.domain.repository.ChatRepository
 import com.example.myapplication.feature_main.domain.usecase.DispatchAlertUseCase
+import ru.alekseev.myapplication.domain.entity.RagMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import ru.alekseev.myapplication.data.datasource.ChatWebSocketDataSource
@@ -14,8 +15,8 @@ class ChatRepositoryImpl(
     private val dispatchAlertUseCase: DispatchAlertUseCase,
 ) : ChatRepository {
 
-    override suspend fun sendMessage(message: String, useRag: Boolean) {
-        webSocketDataSource.sendMessage(message, useRag)
+    override suspend fun sendMessage(message: String, ragMode: RagMode) {
+        webSocketDataSource.sendMessage(message, ragMode)
     }
 
     override fun observeMessages(): Flow<Result<ChatMessageState>> {

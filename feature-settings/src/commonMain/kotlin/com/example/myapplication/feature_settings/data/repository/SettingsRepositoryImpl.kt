@@ -2,6 +2,7 @@ package com.example.myapplication.feature_settings.data.repository
 
 import com.example.myapplication.feature_settings.data.datasource.SettingsLocalDataSource
 import com.example.myapplication.feature_settings.domain.entity.AppSettings
+import ru.alekseev.myapplication.domain.entity.RagMode
 import com.example.myapplication.feature_settings.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
 
@@ -17,9 +18,9 @@ class SettingsRepositoryImpl(
         return localDataSource.getSettings()
     }
 
-    override suspend fun updateRagEnabled(enabled: Boolean) {
+    override suspend fun updateRagMode(ragMode: RagMode) {
         val currentSettings = localDataSource.getSettings()
-        val updatedSettings = currentSettings.copy(ragEnabled = enabled)
+        val updatedSettings = currentSettings.copy(ragMode = ragMode)
         localDataSource.saveSettings(updatedSettings)
     }
 }

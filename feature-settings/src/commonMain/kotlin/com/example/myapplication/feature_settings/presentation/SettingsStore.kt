@@ -1,5 +1,6 @@
 package com.example.myapplication.feature_settings.presentation
 
+import ru.alekseev.myapplication.domain.entity.RagMode
 import com.example.myapplication.feature_settings.domain.usecase.GetSettingsUseCase
 import com.example.myapplication.feature_settings.domain.usecase.UpdateRagSettingUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -17,12 +18,12 @@ import pro.respawn.flowmvi.plugins.recover
 import pro.respawn.flowmvi.plugins.reduce
 
 data class SettingsState(
-    val ragEnabled: Boolean = false,
+    val ragMode: RagMode = RagMode.Disabled,
     val error: String? = null
 ) : MVIState
 
 sealed interface SettingsIntent : MVIIntent {
-    data class UpdateRagEnabled(val enabled: Boolean) : SettingsIntent
+    data class UpdateRagMode(val ragMode: RagMode) : SettingsIntent
     data object ClearError : SettingsIntent
 }
 
@@ -51,17 +52,17 @@ class SettingsStore(
             // Observe settings changes
             getSettingsUseCase().onEach { settings ->
                 updateState {
-                    copy(ragEnabled = settings.ragEnabled)
+                    copy(ragMode = settings.ragMode)
                 }
             }.launchIn(CoroutineScope(coroutineContext))
         }
 
         reduce { intent ->
             when (intent) {
-                is SettingsIntent.UpdateRagEnabled -> {
+                is SettingsIntent.UpdateRagMode -> {
                     CoroutineScope(coroutineContext).launch {
                         try {
-                            updateRagSettingUseCase(intent.enabled)
+                            updateRagSettingUseCase(intent.ragMode)
                             updateState { copy(error = null) }
                         } catch (e: Exception) {
                             updateState { copy(error = e.message) }
