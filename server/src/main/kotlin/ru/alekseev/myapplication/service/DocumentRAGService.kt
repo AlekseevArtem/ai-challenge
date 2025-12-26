@@ -9,6 +9,7 @@ import ru.alekseev.indexer.data.ollama.OllamaClient
 import ru.alekseev.indexer.domain.models.IndexMetadata
 import ru.alekseev.indexer.domain.pipeline.IndexingPipeline
 import ru.alekseev.myapplication.config.RAGConfig
+import ru.alekseev.myapplication.domain.gateway.DocumentRetriever
 import ru.alekseev.myapplication.domain.rag.ChunkRelevanceFilter
 import java.io.File
 
@@ -19,7 +20,7 @@ import java.io.File
 class DocumentRAGService(
     private val config: RAGConfig,
     private val mcpUrl: String = "http://localhost:8082"
-) {
+) : DocumentRetriever {
     private val indexPath: String = config.indexPath
     private val metadataPath: String = config.metadataPath
     private val vectorIndex = VectorIndex()
@@ -32,7 +33,7 @@ class DocumentRAGService(
     /**
      * Initialize the service by loading the index from disk
      */
-    suspend fun initialize() {
+    override suspend fun initialize() {
         withContext(Dispatchers.IO) {
             val indexFile = File(indexPath)
 
@@ -120,10 +121,10 @@ class DocumentRAGService(
      * @param topK Number of top results to return
      * @param filter Optional relevance filter to apply to results
      */
-    suspend fun getContextForQuery(
+    override suspend fun getContextForQuery(
         query: String,
-        topK: Int = 5,
-        filter: ChunkRelevanceFilter? = null
+        topK: Int,
+        filter: ChunkRelevanceFilter?
     ): String {
         val results = search(query, topK, filter)
 
@@ -181,7 +182,7 @@ class DocumentRAGService(
     /**
      * Check if the index is loaded and ready
      */
-    fun isReady(): Boolean = isIndexLoaded
+    override fun isReady(): Boolean = isIndexLoaded
 
     /**
      * Get index statistics
@@ -196,7 +197,7 @@ class DocumentRAGService(
         )
     }
 
-    fun close() {
+    override fun close() {
         ollamaClient.close()
     }
 }

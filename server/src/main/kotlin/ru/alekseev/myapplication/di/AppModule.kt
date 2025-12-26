@@ -5,6 +5,8 @@ import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import org.koin.dsl.module
 import ru.alekseev.myapplication.core.common.JsonFactory
 import ru.alekseev.myapplication.db.ChatDatabase
+import ru.alekseev.myapplication.domain.gateway.ClaudeGateway
+import ru.alekseev.myapplication.domain.gateway.DocumentRetriever
 import ru.alekseev.myapplication.repository.ChatRepository
 import ru.alekseev.myapplication.repository.ChatRepositoryImpl
 import ru.alekseev.myapplication.service.ClaudeApiService
@@ -54,7 +56,11 @@ val databaseModule = module {
 }
 
 val serviceModule = module {
-    single { ClaudeApiService(get(), get()) }
+    // Domain gateway implementations
+    single<ClaudeGateway> { ClaudeApiService(get(), get()) }
+    single<DocumentRetriever> { DocumentRAGService(config = get()) }
+
+    // Other services
     single { SummarizationService(get()) }
     single { ReminderSchedulerService(get()) }
     single { WebSocketManager(get(), get()) }
@@ -71,8 +77,6 @@ val serviceModule = module {
             println("  - Overlap: ${config.overlapSize}")
         }
     }
-
-    single { DocumentRAGService(config = get()) }
 
     single {
         val mcpManager = MCPManager()

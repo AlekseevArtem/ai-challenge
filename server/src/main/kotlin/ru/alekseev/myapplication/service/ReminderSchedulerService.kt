@@ -10,13 +10,14 @@ import kotlin.time.Duration.Companion.minutes
 import ru.alekseev.myapplication.data.dto.ClaudeRequest
 import ru.alekseev.myapplication.data.dto.ClaudeMessage
 import ru.alekseev.myapplication.data.dto.ClaudeMessageContent
+import ru.alekseev.myapplication.domain.gateway.ClaudeGateway
 
 /**
  * Service that periodically generates reminder summaries
  * and broadcasts them to all connected clients
  */
 class ReminderSchedulerService(
-    private val claudeApiService: ClaudeApiService
+    private val claudeGateway: ClaudeGateway
 ) {
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var schedulerJob: Job? = null
@@ -72,7 +73,7 @@ class ReminderSchedulerService(
     private suspend fun generateAndBroadcastSummary() {
         try {
             // Initialize MCP if needed
-            claudeApiService.initializeMCP()
+            claudeGateway.initialize()
 
             // Ask Claude to get reminders summary
             // Claude will use the MCP tool "get_reminders_summary" automatically
@@ -92,7 +93,7 @@ class ReminderSchedulerService(
                 )
             )
 
-            val response = claudeApiService.sendMessage(request)
+            val response = claudeGateway.sendMessage(request)
 
             // Extract text from response
             val summaryText = response.content

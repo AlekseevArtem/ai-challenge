@@ -19,13 +19,13 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 import ru.alekseev.myapplication.data.dto.*
+import ru.alekseev.myapplication.domain.gateway.ClaudeGateway
 
 class ClaudeApiService(
     private val json: Json,
     private val mcpManager: MCPManager,
-) {
+) : ClaudeGateway {
     private val apiKey: String by lazy {
         loadApiKey()
     }
@@ -63,7 +63,7 @@ class ClaudeApiService(
     /**
      * Initialize MCP connections
      */
-    suspend fun initializeMCP() {
+    override suspend fun initialize() {
         if (!mcpInitialized) {
             println("[ClaudeApiService] Initializing MCP connections...")
             try {
@@ -91,7 +91,7 @@ class ClaudeApiService(
         println("[ClaudeApiService] Getting MCP tools...")
         if (!mcpInitialized) {
             println("[ClaudeApiService] MCP not initialized, initializing now...")
-            initializeMCP()
+            initialize()
         }
         val tools = mcpManager.getAllTools()
         println("[ClaudeApiService] Retrieved ${tools.size} MCP tools")
@@ -182,14 +182,14 @@ class ClaudeApiService(
     /**
      * Send a message to Claude API with MCP tools and handle tool calls
      */
-    suspend fun sendMessage(request: ClaudeRequest): ClaudeResponse {
+    override suspend fun sendMessage(request: ClaudeRequest): ClaudeResponse {
         println("[ClaudeApiService] sendMessage called")
         println("[ClaudeApiService] Request details: model=${request.model}, max_tokens=${request.maxTokens}, messages=${request.messages.size}")
 
         // Ensure MCP is initialized
         if (!mcpInitialized) {
             println("[ClaudeApiService] MCP not initialized, initializing...")
-            initializeMCP()
+            initialize()
         }
 
         // Add MCP tools to the request if not already present
@@ -302,7 +302,7 @@ class ClaudeApiService(
         }
     }
 
-    fun close() {
+    override fun close() {
         println("[ClaudeApiService] Closing HTTP client...")
         httpClient.close()
         println("[ClaudeApiService] HTTP client closed")

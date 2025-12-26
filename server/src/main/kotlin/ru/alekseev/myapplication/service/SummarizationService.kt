@@ -3,9 +3,10 @@ package ru.alekseev.myapplication.service
 import ru.alekseev.myapplication.data.dto.ClaudeMessage
 import ru.alekseev.myapplication.data.dto.ClaudeMessageContent
 import ru.alekseev.myapplication.data.dto.ClaudeRequest
+import ru.alekseev.myapplication.domain.gateway.ClaudeGateway
 
 class SummarizationService(
-    private val claudeApiService: ClaudeApiService,
+    private val claudeGateway: ClaudeGateway,
 ) {
 
     suspend fun createSummary(messages: List<Pair<String, String>>): String {
@@ -38,7 +39,7 @@ class SummarizationService(
             )
         )
 
-        val response = claudeApiService.sendMessage(request)
+        val response = claudeGateway.sendMessage(request)
 
         return response.content?.firstOrNull { it.type == "text" }?.text
             ?: "Summary could not be generated"

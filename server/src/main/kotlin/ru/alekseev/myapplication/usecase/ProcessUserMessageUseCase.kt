@@ -3,12 +3,12 @@ package ru.alekseev.myapplication.usecase
 import kotlinx.serialization.json.Json
 import ru.alekseev.myapplication.data.dto.*
 import ru.alekseev.myapplication.domain.entity.RagMode
+import ru.alekseev.myapplication.domain.gateway.ClaudeGateway
+import ru.alekseev.myapplication.domain.gateway.DocumentRetriever
 import ru.alekseev.myapplication.domain.model.*
 import ru.alekseev.myapplication.domain.rag.SimilarityThresholdFilter
 import ru.alekseev.myapplication.mapper.createMessageInfo
 import ru.alekseev.myapplication.repository.ChatRepository
-import ru.alekseev.myapplication.service.ClaudeApiService
-import ru.alekseev.myapplication.service.DocumentRAGService
 import java.util.UUID
 import kotlin.system.measureTimeMillis
 
@@ -26,12 +26,13 @@ data class ProcessMessageResult(
  * Handles building context from summaries and uncompressed messages,
  * calling Claude API, and saving the result.
  *
- * Works with domain entities, not DTOs or database entities.
+ * Works with domain entities and depends on domain interfaces (ports),
+ * not concrete service implementations.
  */
 class ProcessUserMessageUseCase(
     private val chatRepository: ChatRepository,
-    private val claudeApiService: ClaudeApiService,
-    private val documentRAGService: DocumentRAGService,
+    private val claudeGateway: ClaudeGateway,
+    private val documentRetriever: DocumentRetriever,
     private val json: Json
 ) {
     /**
@@ -60,7 +61,7 @@ class ProcessUserMessageUseCase(
         // Call Claude API and measure time
         val claudeResponse: ClaudeResponse
         val responseTime = measureTimeMillis {
-            claudeResponse = claudeApiService.sendMessage(claudeRequest)
+            claudeResponse = claudeGateway.sendMessage(claudeRequest)
         }
 
         // Extract text from response
@@ -154,9 +155,9 @@ class ProcessUserMessageUseCase(
             }
             is RagMode.Enabled -> {
                 // RAG without filtering
-                if (documentRAGService.isReady()) {
+                if (documentRetriever.isReady()) {
                     println("[ProcessUserMessageUseCase] RAG enabled without filtering")
-                    val ragContext = documentRAGService.getContextForQuery(currentMessage, topK = 3, filter = null)
+                    val ragContext = documentRetriever.getContextForQuery(currentMessage, topK = 3, filter = null)
                     if (ragContext.isNotBlank()) {
                         messagesForApi.add(
                             ClaudeMessage(
@@ -175,10 +176,10 @@ class ProcessUserMessageUseCase(
             }
             is RagMode.EnabledWithFiltering -> {
                 // RAG with similarity threshold filtering
-                if (documentRAGService.isReady()) {
+                if (documentRetriever.isReady()) {
                     println("[ProcessUserMessageUseCase] RAG enabled with filtering (threshold: ${ragMode.threshold})")
                     val filter = SimilarityThresholdFilter(ragMode.threshold)
-                    val ragContext = documentRAGService.getContextForQuery(currentMessage, topK = 3, filter = filter)
+                    val ragContext = documentRetriever.getContextForQuery(currentMessage, topK = 3, filter = filter)
                     if (ragContext.isNotBlank()) {
                         messagesForApi.add(
                             ClaudeMessage(
