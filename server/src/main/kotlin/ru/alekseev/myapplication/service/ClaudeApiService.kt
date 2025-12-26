@@ -25,6 +25,7 @@ import ru.alekseev.myapplication.domain.gateway.ClaudeGateway
 class ClaudeApiService(
     private val json: Json,
     private val mcpManager: MCPManager,
+    private val conversationOrchestrator: ConversationOrchestrator
 ) : ClaudeGateway {
     private val apiKey: String by lazy {
         loadApiKey()
@@ -203,102 +204,9 @@ class ClaudeApiService(
             request
         }
 
-        // Send initial request
-        var currentRequest = requestWithTools
-        val conversationMessages = request.messages.toMutableList()
-        var iterationCount = 0
-
-        println("[ClaudeApiService] Starting conversation loop...")
-
-        while (true) {
-            iterationCount++
-            println("[ClaudeApiService] ===== Iteration $iterationCount =====")
-            println("[ClaudeApiService] Sending request to Claude API...")
-            println("[ClaudeApiService] Current conversation has ${conversationMessages.size} messages")
-
-            val response = executeWithRetry(currentRequest)
-
-            // Check if response contains tool_use
-            val toolUses = response.content?.filter { it.type == "tool_use" } ?: emptyList()
-            println("[ClaudeApiService] Found ${toolUses.size} tool_use blocks in response")
-
-            if (toolUses.isEmpty() || response.stopReason != "tool_use") {
-                // No tool calls, return the response
-                println("[ClaudeApiService] No more tool calls. Stop reason: ${response.stopReason}")
-                println("[ClaudeApiService] Returning final response after $iterationCount iteration(s)")
-                return response
-            }
-
-            println("[ClaudeApiService] Processing ${toolUses.size} tool use(s): ${toolUses.map { it.name }}")
-
-            // Add assistant's response to conversation
-            println("[ClaudeApiService] Adding assistant response to conversation history")
-            conversationMessages.add(
-                ClaudeMessage(
-                    role = "assistant",
-                    content = ClaudeMessageContent.ContentBlocks(response.content ?: emptyList())
-                )
-            )
-
-            // Execute tool calls
-            println("[ClaudeApiService] Executing ${toolUses.size} tool call(s)...")
-            val toolResults = mutableListOf<ClaudeContent>()
-            for ((index, toolUse) in toolUses.withIndex()) {
-                val toolName = toolUse.name
-                val toolInput = toolUse.input
-                val toolUseId = toolUse.id
-
-                if (toolName == null || toolUseId == null) {
-                    println("[ClaudeApiService] WARNING: Tool use ${index + 1} missing name or id, skipping")
-                    continue
-                }
-
-                try {
-                    println("[ClaudeApiService] [${index + 1}/${toolUses.size}] Calling tool: $toolName")
-                    println("[ClaudeApiService] Tool input: $toolInput")
-
-                    val result = mcpManager.callTool(toolName, toolInput)
-                    val truncatedResult = if (result.length > 200) {
-                        "${result.take(200)}... (${result.length} chars total)"
-                    } else {
-                        result
-                    }
-                    println("[ClaudeApiService] Tool $toolName completed successfully")
-                    println("[ClaudeApiService] Tool result: $truncatedResult")
-
-                    toolResults.add(
-                        ClaudeContent(
-                            type = "tool_result",
-                            toolUseId = toolUseId,
-                            content = kotlinx.serialization.json.JsonPrimitive(result)
-                        )
-                    )
-                } catch (e: Exception) {
-                    println("[ClaudeApiService] ERROR: Tool $toolName failed with error: ${e.message}")
-                    e.printStackTrace()
-                    toolResults.add(
-                        ClaudeContent(
-                            type = "tool_result",
-                            toolUseId = toolUseId,
-                            content = kotlinx.serialization.json.JsonPrimitive("Error: ${e.message}"),
-                            isError = true
-                        )
-                    )
-                }
-            }
-
-            // Add tool results to conversation
-            println("[ClaudeApiService] Adding ${toolResults.size} tool result(s) to conversation")
-            conversationMessages.add(
-                ClaudeMessage(
-                    role = "user",
-                    content = ClaudeMessageContent.ContentBlocks(toolResults)
-                )
-            )
-
-            // Continue conversation with tool results
-            println("[ClaudeApiService] Continuing conversation with updated messages")
-            currentRequest = currentRequest.copy(messages = conversationMessages)
+        // Use ConversationOrchestrator to handle multi-turn conversation with tool use
+        return conversationOrchestrator.orchestrateConversation(requestWithTools) { req ->
+            executeWithRetry(req)
         }
     }
 

@@ -4,9 +4,7 @@ import kotlinx.serialization.json.Json
 import ru.alekseev.myapplication.data.dto.*
 import ru.alekseev.myapplication.domain.entity.RagMode
 import ru.alekseev.myapplication.domain.gateway.ClaudeGateway
-import ru.alekseev.myapplication.domain.gateway.DocumentRetriever
 import ru.alekseev.myapplication.domain.model.*
-import ru.alekseev.myapplication.domain.rag.SimilarityThresholdFilter
 import ru.alekseev.myapplication.mapper.createMessageInfo
 import ru.alekseev.myapplication.repository.ChatRepository
 import java.util.UUID
@@ -23,8 +21,11 @@ data class ProcessMessageResult(
 
 /**
  * Use case for processing a user message through the Claude API.
- * Handles building context from summaries and uncompressed messages,
- * calling Claude API, and saving the result.
+ * Orchestrates the high-level flow:
+ * 1. Build message history (delegated to MessageHistoryBuilder)
+ * 2. Call Claude API
+ * 3. Save conversation to database
+ * 4. Return domain result
  *
  * Works with domain entities and depends on domain interfaces (ports),
  * not concrete service implementations.
@@ -32,7 +33,7 @@ data class ProcessMessageResult(
 class ProcessUserMessageUseCase(
     private val chatRepository: ChatRepository,
     private val claudeGateway: ClaudeGateway,
-    private val documentRetriever: DocumentRetriever,
+    private val messageHistoryBuilder: MessageHistoryBuilder,
     private val json: Json
 ) {
     /**
@@ -52,8 +53,8 @@ class ProcessUserMessageUseCase(
         userId: UserId = UserId.DEFAULT,
         ragMode: RagMode = RagMode.Disabled
     ): ProcessMessageResult {
-        // Build message history for Claude API
-        val messagesForApi = buildMessageHistory(userId, userMessageText, ragMode)
+        // Build message history for Claude API (delegated to MessageHistoryBuilder)
+        val messagesForApi = messageHistoryBuilder.buildMessageHistory(userId, userMessageText, ragMode)
 
         // Create Claude API request
         val claudeRequest = ClaudeRequest(messages = messagesForApi)
@@ -104,107 +105,5 @@ class ProcessUserMessageUseCase(
             messageInfo = messageInfo,
             usedRag = ragMode !is RagMode.Disabled
         )
-    }
-
-    /**
-     * Builds the message history for Claude API from summaries and uncompressed messages.
-     * Summaries are added as context at the beginning of the conversation.
-     * Also includes RAG context from relevant documents based on the RAG mode.
-     *
-     * Now works with domain entities (Message, Summary) instead of database entities.
-     */
-    private suspend fun buildMessageHistory(userId: UserId, currentMessage: String, ragMode: RagMode): List<ClaudeMessage> {
-        val summaries = chatRepository.getAllSummaries(userId)
-        val uncompressedMessages = chatRepository.getUncompressedMessages(userId)
-
-        val messagesForApi = mutableListOf<ClaudeMessage>()
-
-        // Add summaries as system context
-        if (summaries.isNotEmpty()) {
-            val summaryContext = summaries.joinToString("\n\n") {
-                "Previous conversation summary: ${it.summaryText}"
-            }
-            messagesForApi.add(
-                ClaudeMessage(
-                    role = "user",
-                    content = ClaudeMessageContent.Text(summaryContext)
-                )
-            )
-            messagesForApi.add(
-                ClaudeMessage(
-                    role = "assistant",
-                    content = ClaudeMessageContent.Text("I understand the context from previous conversations.")
-                )
-            )
-        }
-
-        // Add uncompressed messages
-        uncompressedMessages.forEach { msg ->
-            messagesForApi.add(
-                ClaudeMessage(role = "user", content = ClaudeMessageContent.Text(msg.userMessage))
-            )
-            messagesForApi.add(
-                ClaudeMessage(role = "assistant", content = ClaudeMessageContent.Text(msg.assistantMessage))
-            )
-        }
-
-        // Add RAG context from document search based on mode
-        when (ragMode) {
-            is RagMode.Disabled -> {
-                // No RAG context
-            }
-            is RagMode.Enabled -> {
-                // RAG without filtering
-                if (documentRetriever.isReady()) {
-                    println("[ProcessUserMessageUseCase] RAG enabled without filtering")
-                    val ragContext = documentRetriever.getContextForQuery(currentMessage, topK = 3, filter = null)
-                    if (ragContext.isNotBlank()) {
-                        messagesForApi.add(
-                            ClaudeMessage(
-                                role = "user",
-                                content = ClaudeMessageContent.Text(ragContext)
-                            )
-                        )
-                        messagesForApi.add(
-                            ClaudeMessage(
-                                role = "assistant",
-                                content = ClaudeMessageContent.Text("I understand. I'll use this context from the project codebase to answer your question.")
-                            )
-                        )
-                    }
-                }
-            }
-            is RagMode.EnabledWithFiltering -> {
-                // RAG with similarity threshold filtering
-                if (documentRetriever.isReady()) {
-                    println("[ProcessUserMessageUseCase] RAG enabled with filtering (threshold: ${ragMode.threshold})")
-                    val filter = SimilarityThresholdFilter(ragMode.threshold)
-                    val ragContext = documentRetriever.getContextForQuery(currentMessage, topK = 3, filter = filter)
-                    if (ragContext.isNotBlank()) {
-                        messagesForApi.add(
-                            ClaudeMessage(
-                                role = "user",
-                                content = ClaudeMessageContent.Text(ragContext)
-                            )
-                        )
-                        messagesForApi.add(
-                            ClaudeMessage(
-                                role = "assistant",
-                                content = ClaudeMessageContent.Text("I understand. I'll use this filtered context from the project codebase to answer your question.")
-                            )
-                        )
-                    } else {
-                        println("[ProcessUserMessageUseCase] No chunks passed the similarity threshold, proceeding without RAG context")
-                    }
-                }
-            }
-        }
-
-        // Add current user message
-        messagesForApi.add(
-            ClaudeMessage(role = "user", content = ClaudeMessageContent.Text(currentMessage))
-        )
-
-        return messagesForApi
     }
 }

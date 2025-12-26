@@ -56,8 +56,11 @@ val databaseModule = module {
 }
 
 val serviceModule = module {
+    // Conversation orchestration (extracted from ClaudeApiService)
+    single { ru.alekseev.myapplication.service.ConversationOrchestrator(get()) }
+
     // Domain gateway implementations
-    single<ClaudeGateway> { ClaudeApiService(get(), get()) }
+    single<ClaudeGateway> { ClaudeApiService(get(), get(), get()) }
     single<DocumentRetriever> { DocumentRAGService(config = get()) }
 
     // Other services
@@ -194,6 +197,10 @@ val repositoryModule = module {
 }
 
 val useCaseModule = module {
+    // Message history building (extracted from ProcessUserMessageUseCase)
+    factory { ru.alekseev.myapplication.usecase.MessageHistoryBuilder(get(), get()) }
+
+    // Use cases
     factory { LoadChatHistoryUseCase(get(), get()) }
     factory { HandleSummarizationUseCase(get(), get()) }
     factory { ProcessUserMessageUseCase(get(), get(), get(), get()) }
