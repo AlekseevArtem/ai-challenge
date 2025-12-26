@@ -8,28 +8,28 @@ import ru.alekseev.myapplication.data.dto.ChatMessageDto
 import ru.alekseev.myapplication.data.dto.ClaudeResponse
 import ru.alekseev.myapplication.data.dto.MessageInfoDto
 import ru.alekseev.myapplication.data.dto.MessageSender
-import ru.alekseev.myapplication.db.Message
+import ru.alekseev.myapplication.domain.model.Message as DomainMessage
 
 /**
- * Converts a database Message to a user ChatMessageDto.
+ * Converts a domain Message to a user ChatMessageDto.
  * The user message is sent before the assistant message, so it gets a slightly earlier timestamp.
  */
-fun Message.toUserMessageDto(): ChatMessageDto {
+fun DomainMessage.toUserMessageDto(): ChatMessageDto {
     return ChatMessageDto(
-        id = "${this.id}${ChatConstants.USER_MESSAGE_ID_SUFFIX}",
-        content = this.user_message,
+        id = "${this.id.value}${ChatConstants.USER_MESSAGE_ID_SUFFIX}",
+        content = this.userMessage,
         sender = MessageSender.USER,
-        timestamp = this.timestamp - ChatConstants.USER_MESSAGE_TIMESTAMP_OFFSET,
+        timestamp = this.timestamp.value - ChatConstants.USER_MESSAGE_TIMESTAMP_OFFSET,
         messageInfo = null
     )
 }
 
 /**
- * Converts a database Message to an assistant ChatMessageDto with full message info.
+ * Converts a domain Message to an assistant ChatMessageDto with full message info.
  * Requires a Json instance to parse the stored Claude response.
  */
-fun Message.toAssistantMessageDto(json: Json): ChatMessageDto {
-    val claudeResponse = json.decodeFromString<ClaudeResponse>(this.claude_response_json)
+fun DomainMessage.toAssistantMessageDto(json: Json): ChatMessageDto {
+    val claudeResponse = json.decodeFromString<ClaudeResponse>(this.claudeResponseJson)
 
     val cost = calculateCost(
         model = claudeResponse.model ?: ClaudeModels.DEFAULT_MODEL,
@@ -38,14 +38,14 @@ fun Message.toAssistantMessageDto(json: Json): ChatMessageDto {
     )
 
     return ChatMessageDto(
-        id = this.id,
-        content = this.assistant_message,
+        id = this.id.value,
+        content = this.assistantMessage,
         sender = MessageSender.ASSISTANT,
-        timestamp = this.timestamp,
+        timestamp = this.timestamp.value,
         messageInfo = MessageInfoDto(
             inputTokens = claudeResponse.usage?.inputTokens ?: 0,
             outputTokens = claudeResponse.usage?.outputTokens ?: 0,
-            responseTimeMs = this.response_time_ms,
+            responseTimeMs = this.responseTimeMs.value,
             model = claudeResponse.model ?: "unknown",
             cost = cost
         )
@@ -53,10 +53,10 @@ fun Message.toAssistantMessageDto(json: Json): ChatMessageDto {
 }
 
 /**
- * Converts a database Message to both user and assistant ChatMessageDto objects.
+ * Converts a domain Message to both user and assistant ChatMessageDto objects.
  * This is useful for loading chat history where we need both messages.
  */
-fun Message.toBothMessageDtos(json: Json): Pair<ChatMessageDto, ChatMessageDto> {
+fun DomainMessage.toBothMessageDtos(json: Json): Pair<ChatMessageDto, ChatMessageDto> {
     return Pair(
         toUserMessageDto(),
         toAssistantMessageDto(json)

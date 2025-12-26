@@ -33,7 +33,6 @@ kotlin {
                 // Core
                 api(project(":shared"))
                 api(project(":core-common"))
-                api(project(":feature-settings"))
 
                 // Decompose
                 api(libs.decompose.decompose)

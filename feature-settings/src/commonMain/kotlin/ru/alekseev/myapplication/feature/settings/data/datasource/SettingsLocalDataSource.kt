@@ -1,6 +1,6 @@
 package ru.alekseev.myapplication.feature.settings.data.datasource
 
-import ru.alekseev.myapplication.feature.settings.domain.entity.AppSettings
+import ru.alekseev.myapplication.domain.entity.AppSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

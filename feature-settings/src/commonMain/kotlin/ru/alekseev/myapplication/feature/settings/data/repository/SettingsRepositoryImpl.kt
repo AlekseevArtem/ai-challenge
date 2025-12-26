@@ -1,9 +1,9 @@
 package ru.alekseev.myapplication.feature.settings.data.repository
 
 import ru.alekseev.myapplication.feature.settings.data.datasource.SettingsLocalDataSource
-import ru.alekseev.myapplication.feature.settings.domain.entity.AppSettings
+import ru.alekseev.myapplication.domain.entity.AppSettings
 import ru.alekseev.myapplication.domain.entity.RagMode
-import ru.alekseev.myapplication.feature.settings.domain.repository.SettingsRepository
+import ru.alekseev.myapplication.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
 
 class SettingsRepositoryImpl(

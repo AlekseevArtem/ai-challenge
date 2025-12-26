@@ -1,9 +1,9 @@
 package ru.alekseev.myapplication.usecase
 
 import kotlinx.serialization.json.Json
-import ru.alekseev.myapplication.core.common.ChatConstants
 import ru.alekseev.myapplication.data.dto.*
 import ru.alekseev.myapplication.domain.entity.RagMode
+import ru.alekseev.myapplication.domain.model.*
 import ru.alekseev.myapplication.domain.rag.SimilarityThresholdFilter
 import ru.alekseev.myapplication.mapper.createMessageInfo
 import ru.alekseev.myapplication.repository.ChatRepository
@@ -13,17 +13,20 @@ import java.util.UUID
 import kotlin.system.measureTimeMillis
 
 /**
- * Result of processing a user message, containing both user and assistant messages to send to client
+ * Result of processing a user message, containing domain message and metadata.
  */
 data class ProcessMessageResult(
-    val userMessage: ChatMessageDto,
-    val assistantMessage: ChatMessageDto
+    val message: Message,
+    val messageInfo: MessageInfoDto,
+    val usedRag: Boolean
 )
 
 /**
  * Use case for processing a user message through the Claude API.
  * Handles building context from summaries and uncompressed messages,
  * calling Claude API, and saving the result.
+ *
+ * Works with domain entities, not DTOs or database entities.
  */
 class ProcessUserMessageUseCase(
     private val chatRepository: ChatRepository,
@@ -36,16 +39,16 @@ class ProcessUserMessageUseCase(
      * 1. Building message history from summaries and uncompressed messages
      * 2. Calling Claude API with the full context
      * 3. Saving the conversation to database
-     * 4. Creating DTOs for the response
+     * 4. Returning domain Message entity
      *
      * @param userMessageText The message text from the user
-     * @param userId The user identifier
+     * @param userId The user identifier (domain value object)
      * @param ragMode The RAG mode to use (Disabled, Enabled, or EnabledWithFiltering)
-     * @return ProcessMessageResult containing both user and assistant message DTOs
+     * @return ProcessMessageResult containing domain Message and metadata
      */
     suspend operator fun invoke(
         userMessageText: String,
-        userId: String = ChatConstants.DEFAULT_USER_ID,
+        userId: UserId = UserId.DEFAULT,
         ragMode: RagMode = RagMode.Disabled
     ): ProcessMessageResult {
         // Build message history for Claude API
@@ -66,45 +69,50 @@ class ProcessUserMessageUseCase(
             ?.text ?: "No response"
 
         // Save to database
-        val messageId = UUID.randomUUID().toString()
-        val currentTimestamp = System.currentTimeMillis()
+        val messageId = MessageId(UUID.randomUUID().toString())
+        val currentTimestamp = Timestamp(System.currentTimeMillis())
+        val responseTimeValue = ResponseTimeMs(responseTime)
+
         chatRepository.saveMessage(
             id = messageId,
             userMessage = userMessageText,
             assistantMessage = responseText,
             claudeResponseJson = json.encodeToString(claudeResponse),
             timestamp = currentTimestamp,
-            responseTimeMs = responseTime,
+            responseTimeMs = responseTimeValue,
             userId = userId
         )
 
-        // Create DTOs for response
-        val userMessage = ChatMessageDto(
-            id = "${messageId}${ChatConstants.USER_MESSAGE_ID_SUFFIX}",
-            content = userMessageText,
-            sender = MessageSender.USER,
-            timestamp = currentTimestamp - ChatConstants.USER_MESSAGE_TIMESTAMP_OFFSET,
-            messageInfo = null
+        // Create domain Message entity
+        val domainMessage = Message(
+            id = messageId,
+            userMessage = userMessageText,
+            assistantMessage = responseText,
+            claudeResponseJson = json.encodeToString(claudeResponse),
+            timestamp = currentTimestamp,
+            responseTimeMs = responseTimeValue,
+            isCompressed = false,
+            userId = userId
         )
 
-        val assistantMessage = ChatMessageDto(
-            id = messageId,
-            content = responseText,
-            sender = MessageSender.ASSISTANT,
-            timestamp = currentTimestamp,
-            messageInfo = createMessageInfo(claudeResponse, responseTime),
+        // Create message info
+        val messageInfo = createMessageInfo(claudeResponse, responseTime)
+
+        return ProcessMessageResult(
+            message = domainMessage,
+            messageInfo = messageInfo,
             usedRag = ragMode !is RagMode.Disabled
         )
-
-        return ProcessMessageResult(userMessage, assistantMessage)
     }
 
     /**
      * Builds the message history for Claude API from summaries and uncompressed messages.
      * Summaries are added as context at the beginning of the conversation.
      * Also includes RAG context from relevant documents based on the RAG mode.
+     *
+     * Now works with domain entities (Message, Summary) instead of database entities.
      */
-    private suspend fun buildMessageHistory(userId: String, currentMessage: String, ragMode: RagMode): List<ClaudeMessage> {
+    private suspend fun buildMessageHistory(userId: UserId, currentMessage: String, ragMode: RagMode): List<ClaudeMessage> {
         val summaries = chatRepository.getAllSummaries(userId)
         val uncompressedMessages = chatRepository.getUncompressedMessages(userId)
 
@@ -113,7 +121,7 @@ class ProcessUserMessageUseCase(
         // Add summaries as system context
         if (summaries.isNotEmpty()) {
             val summaryContext = summaries.joinToString("\n\n") {
-                "Previous conversation summary: ${it.summary_text}"
+                "Previous conversation summary: ${it.summaryText}"
             }
             messagesForApi.add(
                 ClaudeMessage(
@@ -132,10 +140,10 @@ class ProcessUserMessageUseCase(
         // Add uncompressed messages
         uncompressedMessages.forEach { msg ->
             messagesForApi.add(
-                ClaudeMessage(role = "user", content = ClaudeMessageContent.Text(msg.user_message))
+                ClaudeMessage(role = "user", content = ClaudeMessageContent.Text(msg.userMessage))
             )
             messagesForApi.add(
-                ClaudeMessage(role = "assistant", content = ClaudeMessageContent.Text(msg.assistant_message))
+                ClaudeMessage(role = "assistant", content = ClaudeMessageContent.Text(msg.assistantMessage))
             )
         }
 

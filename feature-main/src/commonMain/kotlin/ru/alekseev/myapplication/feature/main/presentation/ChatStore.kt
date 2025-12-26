@@ -9,7 +9,7 @@ import ru.alekseev.myapplication.feature.main.domain.usecase.ConnectToChatUseCas
 import ru.alekseev.myapplication.feature.main.domain.usecase.ObserveMessagesUseCase
 import ru.alekseev.myapplication.feature.main.domain.usecase.SendMessageUseCase
 import ru.alekseev.myapplication.domain.entity.RagMode
-import ru.alekseev.myapplication.feature.settings.domain.usecase.GetSettingsUseCase
+import ru.alekseev.myapplication.domain.repository.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -51,7 +51,7 @@ class ChatStore(
     private val sendMessageUseCase: SendMessageUseCase,
     private val observeMessagesUseCase: ObserveMessagesUseCase,
     private val connectToChatUseCase: ConnectToChatUseCase,
-    private val getSettingsUseCase: GetSettingsUseCase,
+    private val settingsRepository: SettingsRepository,
 ) : Container<ChatState, ChatIntent, ChatAction> {
 
     override val store: Store<ChatState, ChatIntent, ChatAction> = store(ChatState()) {
@@ -70,7 +70,7 @@ class ChatStore(
             connectToChatUseCase()
 
             // Observe settings to track RAG mode
-            getSettingsUseCase().onEach { settings ->
+            settingsRepository.observeSettings().onEach { settings ->
                 updateState {
                     copy(ragMode = settings.ragMode)
                 }

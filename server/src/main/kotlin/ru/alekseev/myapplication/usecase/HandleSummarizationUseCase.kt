@@ -1,6 +1,7 @@
 package ru.alekseev.myapplication.usecase
 
 import ru.alekseev.myapplication.core.common.ChatConstants
+import ru.alekseev.myapplication.domain.model.*
 import ru.alekseev.myapplication.repository.ChatRepository
 import ru.alekseev.myapplication.service.SummarizationService
 import java.util.UUID
@@ -8,6 +9,8 @@ import java.util.UUID
 /**
  * Use case for handling automatic conversation summarization.
  * Checks if summarization is needed and performs it if the threshold is reached.
+ *
+ * Now works with domain entities instead of database entities.
  */
 class HandleSummarizationUseCase(
     private val chatRepository: ChatRepository,
@@ -17,10 +20,10 @@ class HandleSummarizationUseCase(
      * Checks if summarization is needed and performs it.
      * Summarization triggers when uncompressed messages reach the threshold.
      *
-     * @param userId The user identifier
+     * @param userId The user identifier (domain value object)
      * @return true if summarization was performed, false otherwise
      */
-    suspend operator fun invoke(userId: String): Boolean {
+    suspend operator fun invoke(userId: UserId): Boolean {
         val uncompressedCount = chatRepository.getUncompressedMessagesCount(userId)
 
         if (uncompressedCount < ChatConstants.SUMMARIZATION_THRESHOLD) {
@@ -30,9 +33,9 @@ class HandleSummarizationUseCase(
         return try {
             val uncompressedMessages = chatRepository.getUncompressedMessages(userId)
 
-            // Create message pairs for summarization
+            // Create message pairs for summarization (domain entities)
             val messagePairs = uncompressedMessages.map { msg ->
-                msg.user_message to msg.assistant_message
+                msg.userMessage to msg.assistantMessage
             }
 
             // Generate summary
@@ -41,10 +44,10 @@ class HandleSummarizationUseCase(
             // Save summary to database
             val summaries = chatRepository.getAllSummaries(userId)
             chatRepository.saveSummary(
-                id = UUID.randomUUID().toString(),
+                id = SummaryId(UUID.randomUUID().toString()),
                 summaryText = summaryText,
                 messagesCount = uncompressedCount.toInt(),
-                timestamp = System.currentTimeMillis(),
+                timestamp = Timestamp(System.currentTimeMillis()),
                 position = summaries.size,
                 userId = userId
             )

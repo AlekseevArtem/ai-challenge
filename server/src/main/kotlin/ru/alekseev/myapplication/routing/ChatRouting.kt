@@ -12,6 +12,8 @@ import org.koin.java.KoinJavaComponent.inject
 import ru.alekseev.myapplication.core.common.ChatConstants
 import ru.alekseev.myapplication.data.dto.*
 import ru.alekseev.myapplication.domain.entity.RagMode
+import ru.alekseev.myapplication.domain.model.UserId
+import ru.alekseev.myapplication.mapper.toMessagePairDtos
 import ru.alekseev.myapplication.usecase.HandleSummarizationUseCase
 import ru.alekseev.myapplication.usecase.LoadChatHistoryUseCase
 import ru.alekseev.myapplication.usecase.ProcessUserMessageUseCase
@@ -37,7 +39,7 @@ fun Route.chatRouting() {
     val webSocketManager: WebSocketManager by inject(WebSocketManager::class.java)
 
     webSocket("/chat") {
-        val userId = ChatConstants.DEFAULT_USER_ID
+        val userId = UserId(ChatConstants.DEFAULT_USER_ID)
         val connectionId = Uuid.random().toString()
 
         // Register this connection
@@ -85,15 +87,21 @@ fun Route.chatRouting() {
                             is RagModeDto.EnabledWithFiltering -> RagMode.EnabledWithFiltering(dto.threshold)
                         }
 
-                        // Process user message and get response
+                        // Process user message and get response (returns domain Message)
                         val result = processUserMessageUseCase(request.message, userId, ragMode)
+
+                        // Convert domain Message to DTOs for sending to client
+                        val (userMessageDto, assistantMessageDto) = result.message.toMessagePairDtos(
+                            messageInfo = result.messageInfo,
+                            usedRag = result.usedRag
+                        )
 
                         // Send user message
                         send(
                             Frame.Text(
                                 json.encodeToString(
                                     ChatResponseDto.serializer(),
-                                    ChatResponseDto.Data(message = result.userMessage)
+                                    ChatResponseDto.Data(message = userMessageDto)
                                 )
                             )
                         )
@@ -103,7 +111,7 @@ fun Route.chatRouting() {
                             Frame.Text(
                                 json.encodeToString(
                                     ChatResponseDto.serializer(),
-                                    ChatResponseDto.Data(message = result.assistantMessage)
+                                    ChatResponseDto.Data(message = assistantMessageDto)
                                 )
                             )
                         )

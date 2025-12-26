@@ -1,37 +1,64 @@
 package ru.alekseev.myapplication.repository
 
-import ru.alekseev.myapplication.db.Message
-import ru.alekseev.myapplication.db.Summary
+import ru.alekseev.myapplication.domain.model.*
 
+/**
+ * Repository for chat messages and summaries.
+ * Returns domain entities, not database entities or DTOs.
+ */
 interface ChatRepository {
+    /**
+     * Save a new message to the database.
+     */
     suspend fun saveMessage(
-        id: String,
+        id: MessageId,
         userMessage: String,
         assistantMessage: String,
         claudeResponseJson: String,
-        timestamp: Long,
-        responseTimeMs: Long,
-        userId: String = "default_user"
+        timestamp: Timestamp,
+        responseTimeMs: ResponseTimeMs,
+        userId: UserId = UserId.DEFAULT
     )
 
-    suspend fun getAllMessages(userId: String = "default_user"): List<Message>
+    /**
+     * Get all messages for a user (domain entities).
+     */
+    suspend fun getAllMessages(userId: UserId = UserId.DEFAULT): List<Message>
 
-    suspend fun getUncompressedMessages(userId: String = "default_user"): List<Message>
+    /**
+     * Get uncompressed messages for a user (domain entities).
+     */
+    suspend fun getUncompressedMessages(userId: UserId = UserId.DEFAULT): List<Message>
 
-    suspend fun getUncompressedMessagesCount(userId: String = "default_user"): Long
+    /**
+     * Get count of uncompressed messages.
+     */
+    suspend fun getUncompressedMessagesCount(userId: UserId = UserId.DEFAULT): Long
 
-    suspend fun markMessagesAsCompressed(messageIds: List<String>)
+    /**
+     * Mark messages as compressed.
+     */
+    suspend fun markMessagesAsCompressed(messageIds: List<MessageId>)
 
+    /**
+     * Save a summary to the database.
+     */
     suspend fun saveSummary(
-        id: String,
+        id: SummaryId,
         summaryText: String,
         messagesCount: Int,
-        timestamp: Long,
+        timestamp: Timestamp,
         position: Int,
-        userId: String = "default_user"
+        userId: UserId = UserId.DEFAULT
     )
 
-    suspend fun getAllSummaries(userId: String = "default_user"): List<Summary>
+    /**
+     * Get all summaries for a user (domain entities).
+     */
+    suspend fun getAllSummaries(userId: UserId = UserId.DEFAULT): List<Summary>
 
-    suspend fun getMessageById(id: String): Message?
+    /**
+     * Get a message by ID (domain entity).
+     */
+    suspend fun getMessageById(id: MessageId): Message?
 }
