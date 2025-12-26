@@ -18,8 +18,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
-import com.example.myapplication.feature_welcome.presentation.PreviewWelcomeComponent
-import com.example.myapplication.feature_welcome.presentation.WelcomeComponent
+import ru.alekseev.myapplication.feature.welcome.presentation.PreviewWelcomeComponent
+import ru.alekseev.myapplication.feature.welcome.presentation.WelcomeComponent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

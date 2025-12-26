@@ -3,7 +3,7 @@ package ru.alekseev.myapplication.usecase
 import kotlinx.serialization.json.Json
 import ru.alekseev.myapplication.core.common.ChatConstants
 import ru.alekseev.myapplication.data.dto.*
-import ru.alekseev.myapplication.domain.model.RagMode
+import ru.alekseev.myapplication.domain.entity.RagMode
 import ru.alekseev.myapplication.domain.rag.SimilarityThresholdFilter
 import ru.alekseev.myapplication.mapper.createMessageInfo
 import ru.alekseev.myapplication.repository.ChatRepository

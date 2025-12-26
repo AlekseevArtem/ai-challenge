@@ -58,11 +58,21 @@ val serviceModule = module {
     single { SummarizationService(get()) }
     single { ReminderSchedulerService(get()) }
     single { WebSocketManager(get(), get()) }
+
+    // RAG configuration
     single {
-        DocumentRAGService(
-            ollamaUrl = "http://host.docker.internal:11434"
-        )
+        ru.alekseev.myapplication.config.RAGConfig.load().also { config ->
+            println("[AppModule] RAG Config loaded:")
+            println("  - Index path: ${config.indexPath}")
+            println("  - Ollama URL: ${config.ollamaUrl}")
+            println("  - Embedding model: ${config.embeddingModel}")
+            println("  - TopK: ${config.topK}")
+            println("  - Chunk size: ${config.chunkSize}")
+            println("  - Overlap: ${config.overlapSize}")
+        }
     }
+
+    single { DocumentRAGService(config = get()) }
 
     single {
         val mcpManager = MCPManager()

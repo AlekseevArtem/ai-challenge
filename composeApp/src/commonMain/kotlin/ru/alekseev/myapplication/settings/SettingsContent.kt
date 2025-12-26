@@ -37,8 +37,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.alekseev.myapplication.domain.entity.RagMode
-import com.example.myapplication.feature_settings.presentation.SettingsComponent
-import com.example.myapplication.feature_settings.presentation.SettingsIntent
+import ru.alekseev.myapplication.feature.settings.presentation.SettingsComponent
+import ru.alekseev.myapplication.feature.settings.presentation.SettingsIntent
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import androidx.compose.runtime.rememberCoroutineScope

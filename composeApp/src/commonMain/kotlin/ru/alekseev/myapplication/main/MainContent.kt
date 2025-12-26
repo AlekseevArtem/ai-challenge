@@ -58,9 +58,9 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
-import com.example.myapplication.feature_main.domain.entity.ChatMessage
-import com.example.myapplication.feature_main.presentation.MainComponent
-import com.example.myapplication.feature_main.presentation.PreviewMainComponent
+import ru.alekseev.myapplication.feature.main.domain.entity.ChatMessage
+import ru.alekseev.myapplication.feature.main.presentation.MainComponent
+import ru.alekseev.myapplication.feature.main.presentation.PreviewMainComponent
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import ru.alekseev.myapplication.main.messageinfo.MessageInfoContent

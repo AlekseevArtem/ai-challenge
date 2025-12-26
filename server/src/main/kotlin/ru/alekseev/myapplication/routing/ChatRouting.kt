@@ -11,7 +11,7 @@ import kotlinx.serialization.json.Json
 import org.koin.java.KoinJavaComponent.inject
 import ru.alekseev.myapplication.core.common.ChatConstants
 import ru.alekseev.myapplication.data.dto.*
-import ru.alekseev.myapplication.domain.model.RagMode
+import ru.alekseev.myapplication.domain.entity.RagMode
 import ru.alekseev.myapplication.usecase.HandleSummarizationUseCase
 import ru.alekseev.myapplication.usecase.LoadChatHistoryUseCase
 import ru.alekseev.myapplication.usecase.ProcessUserMessageUseCase

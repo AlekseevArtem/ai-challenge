@@ -8,6 +8,7 @@ import ru.alekseev.indexer.data.mcp.MCPClient
 import ru.alekseev.indexer.data.ollama.OllamaClient
 import ru.alekseev.indexer.domain.models.IndexMetadata
 import ru.alekseev.indexer.domain.pipeline.IndexingPipeline
+import ru.alekseev.myapplication.config.RAGConfig
 import ru.alekseev.myapplication.domain.rag.ChunkRelevanceFilter
 import java.io.File
 
@@ -16,13 +17,13 @@ import java.io.File
  * Provides semantic search over indexed project documents.
  */
 class DocumentRAGService(
-    private val indexPath: String = "./faiss_index/project.index",
-    private val metadataPath: String = "./faiss_index/metadata.json",
-    private val ollamaUrl: String = "http://localhost:11434",
+    private val config: RAGConfig,
     private val mcpUrl: String = "http://localhost:8082"
 ) {
+    private val indexPath: String = config.indexPath
+    private val metadataPath: String = config.metadataPath
     private val vectorIndex = VectorIndex()
-    private val ollamaClient = OllamaClient(ollamaUrl, "nomic-embed-text")
+    private val ollamaClient = OllamaClient(config.ollamaUrl, config.embeddingModel)
     private val json = Json { ignoreUnknownKeys = true }
 
     private var metadata: IndexMetadata? = null
@@ -158,8 +159,8 @@ class DocumentRAGService(
                     mcpClient = mcpClient,
                     ollamaClient = ollamaClient,
                     outputDir = File(indexPath).parent,
-                    chunkSize = 1024,
-                    overlapSize = 100
+                    chunkSize = config.chunkSize,
+                    overlapSize = config.overlapSize
                 )
 
                 pipeline.run()

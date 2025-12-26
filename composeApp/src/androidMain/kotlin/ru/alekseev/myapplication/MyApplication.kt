@@ -1,8 +1,8 @@
 package ru.alekseev.myapplication
 
 import android.app.Application
-import com.example.myapplication.feature_main.di.featureMainModule
-import com.example.myapplication.feature_settings.di.featureSettingsModule
+import ru.alekseev.myapplication.feature.main.di.featureMainModule
+import ru.alekseev.myapplication.feature.settings.di.featureSettingsModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin

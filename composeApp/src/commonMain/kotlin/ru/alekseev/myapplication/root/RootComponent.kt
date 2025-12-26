@@ -2,9 +2,9 @@ package ru.alekseev.myapplication.root
 
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
-import com.example.myapplication.feature_main.presentation.MainComponent
-import com.example.myapplication.feature_settings.presentation.SettingsComponent
-import com.example.myapplication.feature_welcome.presentation.WelcomeComponent
+import ru.alekseev.myapplication.feature.main.presentation.MainComponent
+import ru.alekseev.myapplication.feature.settings.presentation.SettingsComponent
+import ru.alekseev.myapplication.feature.welcome.presentation.WelcomeComponent
 
 interface RootComponent {
 

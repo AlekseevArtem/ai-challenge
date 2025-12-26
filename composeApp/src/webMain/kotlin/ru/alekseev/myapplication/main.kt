@@ -4,8 +4,8 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
-import com.example.myapplication.feature_main.di.featureMainModule
-import com.example.myapplication.feature_settings.di.featureSettingsModule
+import ru.alekseev.myapplication.feature.main.di.featureMainModule
+import ru.alekseev.myapplication.feature.settings.di.featureSettingsModule
 import kotlinx.browser.document
 import org.koin.core.context.startKoin
 import ru.alekseev.myapplication.di.platformModule
