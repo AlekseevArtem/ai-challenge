@@ -1,6 +1,6 @@
 package ru.alekseev.myapplication.domain.rag
 
-import ru.alekseev.myapplication.service.SearchResult
+import ru.alekseev.myapplication.domain.model.SearchResult
 
 /**
  * Domain abstraction for filtering search results based on relevance.

@@ -10,6 +10,7 @@ import ru.alekseev.indexer.domain.models.IndexMetadata
 import ru.alekseev.indexer.domain.pipeline.IndexingPipeline
 import ru.alekseev.myapplication.config.RAGConfig
 import ru.alekseev.myapplication.domain.gateway.DocumentRetriever
+import ru.alekseev.myapplication.domain.model.SearchResult
 import ru.alekseev.myapplication.domain.rag.ChunkRelevanceFilter
 import java.io.File
 
@@ -201,18 +202,6 @@ class DocumentRAGService(
         ollamaClient.close()
     }
 }
-
-/**
- * Result of a document search
- */
-data class SearchResult(
-    val similarity: Float,
-    val filePath: String,
-    val content: String,
-    val fileType: String,
-    val startToken: Int,
-    val endToken: Int
-)
 
 /**
  * Statistics about the loaded index

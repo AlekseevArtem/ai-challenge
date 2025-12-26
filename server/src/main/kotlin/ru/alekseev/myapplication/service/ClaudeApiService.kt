@@ -20,6 +20,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import ru.alekseev.myapplication.data.dto.*
+import ru.alekseev.myapplication.domain.exception.GatewayException
 import ru.alekseev.myapplication.domain.gateway.ClaudeGateway
 
 class ClaudeApiService(
@@ -137,7 +138,7 @@ class ClaudeApiService(
 
                         if (attempt >= maxRetries) {
                             println("[ClaudeApiService] Max retries reached, throwing exception")
-                            throw Exception("Rate limit exceeded after $maxRetries attempts")
+                            throw GatewayException("Claude API", "Rate limit exceeded after $maxRetries attempts")
                         }
 
                         // Get retry-after header (in seconds) or use exponential backoff
@@ -163,19 +164,22 @@ class ClaudeApiService(
                             "Unable to read error body"
                         }
                         println("[ClaudeApiService] ERROR: HTTP ${httpResponse.status.value}: $errorBody")
-                        throw Exception("Claude API request failed with status ${httpResponse.status}: $errorBody")
+                        throw GatewayException("Claude API", "Request failed with status ${httpResponse.status}: $errorBody")
                     }
                 }
 
+            } catch (e: GatewayException) {
+                // Re-throw domain exceptions as-is
+                throw e
             } catch (e: ClientRequestException) {
                 // This shouldn't happen anymore since we check status above,
                 // but keep as fallback
                 println("[ClaudeApiService] ERROR: ClientRequestException: ${e.message}")
-                throw Exception("Failed to call Claude API: ${e.message}", e)
+                throw GatewayException("Claude API", "HTTP request failed: ${e.message}", e)
             } catch (e: Exception) {
                 println("[ClaudeApiService] ERROR: Failed to call Claude API: ${e.message}")
                 e.printStackTrace()
-                throw Exception("Failed to call Claude API: ${e.message}", e)
+                throw GatewayException("Claude API", "Unexpected error: ${e.message}", e)
             }
         }
     }

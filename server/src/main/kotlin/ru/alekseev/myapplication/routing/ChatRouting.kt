@@ -12,6 +12,9 @@ import org.koin.java.KoinJavaComponent.inject
 import ru.alekseev.myapplication.core.common.ChatConstants
 import ru.alekseev.myapplication.data.dto.*
 import ru.alekseev.myapplication.domain.entity.RagMode
+import ru.alekseev.myapplication.domain.exception.DomainException
+import ru.alekseev.myapplication.domain.exception.GatewayException
+import ru.alekseev.myapplication.domain.exception.ValidationException
 import ru.alekseev.myapplication.domain.model.UserId
 import ru.alekseev.myapplication.mapper.toMessagePairDtos
 import ru.alekseev.myapplication.usecase.HandleSummarizationUseCase
@@ -116,13 +119,50 @@ fun Route.chatRouting() {
                             )
                         )
 
-                    } catch (e: Exception) {
+                    } catch (e: ValidationException) {
+                        // Client sent invalid data
+                        println("[ChatRouting] Validation error: ${e.message}")
+                        send(
+                            Frame.Text(
+                                json.encodeToString(
+                                    ChatResponseDto.serializer(),
+                                    ChatResponseDto.Error(error = "Invalid input: ${e.message}")
+                                )
+                            )
+                        )
+                    } catch (e: GatewayException) {
+                        // External service (Claude API, RAG) failed
+                        println("[ChatRouting] Gateway error: ${e.message}")
+                        e.printStackTrace()
+                        send(
+                            Frame.Text(
+                                json.encodeToString(
+                                    ChatResponseDto.serializer(),
+                                    ChatResponseDto.Error(error = "Service unavailable: ${e.message}")
+                                )
+                            )
+                        )
+                    } catch (e: DomainException) {
+                        // Other domain errors
+                        println("[ChatRouting] Domain error: ${e.message}")
                         e.printStackTrace()
                         send(
                             Frame.Text(
                                 json.encodeToString(
                                     ChatResponseDto.serializer(),
                                     ChatResponseDto.Error(error = e.message ?: "Unknown error")
+                                )
+                            )
+                        )
+                    } catch (e: Exception) {
+                        // Unexpected infrastructure errors
+                        println("[ChatRouting] Unexpected error: ${e.message}")
+                        e.printStackTrace()
+                        send(
+                            Frame.Text(
+                                json.encodeToString(
+                                    ChatResponseDto.serializer(),
+                                    ChatResponseDto.Error(error = "Internal server error: ${e.message ?: "Unknown error"}")
                                 )
                             )
                         )
