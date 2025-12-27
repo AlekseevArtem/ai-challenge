@@ -55,9 +55,19 @@ val databaseModule = module {
     }
 }
 
+val observabilityModule = module {
+    // Metrics collectors
+    single<ru.alekseev.myapplication.domain.observability.RAGMetricsCollector> {
+        ru.alekseev.myapplication.infrastructure.observability.PrintlnRAGMetrics()
+    }
+    single<ru.alekseev.myapplication.domain.observability.ConversationMetricsCollector> {
+        ru.alekseev.myapplication.infrastructure.observability.PrintlnConversationMetrics()
+    }
+}
+
 val serviceModule = module {
     // Conversation orchestration (extracted from ClaudeApiService)
-    single { ru.alekseev.myapplication.service.ConversationOrchestrator(get()) }
+    single { ru.alekseev.myapplication.service.ConversationOrchestrator(get(), get()) }
 
     // Domain gateway implementations
     single<ClaudeGateway> { ClaudeApiService(get(), get(), get()) }
@@ -197,13 +207,36 @@ val repositoryModule = module {
 }
 
 val useCaseModule = module {
-    // Message history building (extracted from ProcessUserMessageUseCase)
-    factory { ru.alekseev.myapplication.usecase.MessageHistoryBuilder(get(), get()) }
+    // RAG formatting
+    factory { ru.alekseev.myapplication.usecase.FormatRAGContextUseCase() }
+
+    // Context sources for message history building
+    factory<ru.alekseev.myapplication.domain.context.ContextSource>(qualifier = org.koin.core.qualifier.named("summary")) {
+        ru.alekseev.myapplication.domain.context.SummaryContextSource(get())
+    }
+    factory<ru.alekseev.myapplication.domain.context.ContextSource>(qualifier = org.koin.core.qualifier.named("uncompressed")) {
+        ru.alekseev.myapplication.domain.context.UncompressedMessagesContextSource(get())
+    }
+    factory<ru.alekseev.myapplication.domain.context.ContextSource>(qualifier = org.koin.core.qualifier.named("rag")) {
+        ru.alekseev.myapplication.domain.context.RAGContextSource(get(), get(), get(), topK = 3)
+    }
+
+    // Message history builder with context sources in priority order
+    factory {
+        ru.alekseev.myapplication.usecase.MessageHistoryBuilder(
+            contextSources = listOf(
+                get(org.koin.core.qualifier.named("summary")),
+                get(org.koin.core.qualifier.named("uncompressed")),
+                get(org.koin.core.qualifier.named("rag"))
+                // When adding memory: add MemoryContextSource here
+            )
+        )
+    }
 
     // Use cases
     factory { LoadChatHistoryUseCase(get(), get()) }
     factory { HandleSummarizationUseCase(get(), get()) }
-    factory { ProcessUserMessageUseCase(get(), get(), get(), get()) }
+    factory { ProcessUserMessageUseCase(get(), get(), get(), get(), get()) }
 }
 
-val appModules = listOf(jsonModule, databaseModule, serviceModule, repositoryModule, useCaseModule)
+val appModules = listOf(jsonModule, databaseModule, observabilityModule, serviceModule, repositoryModule, useCaseModule)

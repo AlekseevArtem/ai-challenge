@@ -1,13 +1,13 @@
 package ru.alekseev.myapplication.feature.main.domain.usecase
 
 import ru.alekseev.myapplication.feature.main.domain.entity.ChatMessageState
-import ru.alekseev.myapplication.feature.main.domain.repository.ChatRepository
+import ru.alekseev.myapplication.feature.main.domain.repository.ChatConnectionRepository
 import kotlinx.coroutines.flow.Flow
 
 class ObserveMessagesUseCase(
-    private val chatRepository: ChatRepository
+    private val chatConnectionRepository: ChatConnectionRepository
 ) {
     operator fun invoke(): Flow<Result<ChatMessageState>> {
-        return chatRepository.observeMessages()
+        return chatConnectionRepository.observeMessages()
     }
 }

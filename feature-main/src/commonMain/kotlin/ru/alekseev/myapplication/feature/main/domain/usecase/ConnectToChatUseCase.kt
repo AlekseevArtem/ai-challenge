@@ -1,11 +1,11 @@
 package ru.alekseev.myapplication.feature.main.domain.usecase
 
-import ru.alekseev.myapplication.feature.main.domain.repository.ChatRepository
+import ru.alekseev.myapplication.feature.main.domain.repository.ChatConnectionRepository
 
 class ConnectToChatUseCase(
-    private val chatRepository: ChatRepository
+    private val chatConnectionRepository: ChatConnectionRepository
 ) {
     suspend operator fun invoke() {
-        chatRepository.connect()
+        chatConnectionRepository.connect()
     }
 }

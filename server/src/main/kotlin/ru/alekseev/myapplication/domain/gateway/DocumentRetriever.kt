@@ -1,5 +1,6 @@
 package ru.alekseev.myapplication.domain.gateway
 
+import ru.alekseev.myapplication.domain.model.SearchResult
 import ru.alekseev.myapplication.domain.rag.ChunkRelevanceFilter
 
 /**
@@ -12,6 +13,9 @@ import ru.alekseev.myapplication.domain.rag.ChunkRelevanceFilter
  * - Embedding generation
  * - Similarity scoring
  * - Document chunking and metadata
+ *
+ * NOTE: This interface returns raw SearchResults. Formatting for LLM prompts
+ * should be done by use cases (e.g., FormatRAGContextUseCase), not by this gateway.
  */
 interface DocumentRetriever {
     /**
@@ -29,19 +33,19 @@ interface DocumentRetriever {
     fun isReady(): Boolean
 
     /**
-     * Get context for a query by searching relevant documents.
-     * Returns formatted context string ready to be added to Claude prompts.
+     * Search for relevant documents based on a query.
+     * Returns raw search results with similarity scores.
      *
      * @param query The search query (typically the user's message)
      * @param topK Number of top results to return
      * @param filter Optional filter to apply relevance thresholds
-     * @return Formatted context string, or empty string if no relevant results
+     * @return List of search results ordered by relevance, empty if no relevant results
      */
-    suspend fun getContextForQuery(
+    suspend fun search(
         query: String,
         topK: Int = 5,
         filter: ChunkRelevanceFilter? = null
-    ): String
+    ): List<SearchResult>
 
     /**
      * Close any resources held by this retriever.

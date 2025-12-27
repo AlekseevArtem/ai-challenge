@@ -68,14 +68,15 @@ class DocumentRAGService(
 
     /**
      * Search for relevant documents based on a query
+     * Implements DocumentRetriever.search()
      * @param query The search query
      * @param topK Number of top results to return
      * @param filter Optional relevance filter to apply to results
      */
-    suspend fun search(
+    override suspend fun search(
         query: String,
-        topK: Int = 5,
-        filter: ChunkRelevanceFilter? = null
+        topK: Int,
+        filter: ChunkRelevanceFilter?
     ): List<SearchResult> {
         if (!isIndexLoaded) {
             println("[DocumentRAGService] Index not loaded, returning empty results")
@@ -116,37 +117,6 @@ class DocumentRAGService(
         }
     }
 
-    /**
-     * Get context string from search results to add to Claude prompt
-     * @param query The search query
-     * @param topK Number of top results to return
-     * @param filter Optional relevance filter to apply to results
-     */
-    override suspend fun getContextForQuery(
-        query: String,
-        topK: Int,
-        filter: ChunkRelevanceFilter?
-    ): String {
-        val results = search(query, topK, filter)
-
-        if (results.isEmpty()) {
-            return ""
-        }
-
-        return buildString {
-            appendLine("Here is relevant context from the project codebase:")
-            appendLine()
-            results.forEachIndexed { index, result ->
-                appendLine("--- Document ${index + 1} (${result.filePath}, similarity: ${"%.3f".format(result.similarity)}) ---")
-                appendLine(result.content.take(1000)) // Limit to 1000 chars per chunk
-                if (result.content.length > 1000) {
-                    appendLine("... (truncated)")
-                }
-                appendLine()
-            }
-            appendLine("--- End of Context ---")
-        }
-    }
 
     /**
      * Trigger re-indexing of the project

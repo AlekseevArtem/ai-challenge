@@ -5,6 +5,8 @@ import ru.alekseev.myapplication.data.dto.ClaudeMessage
 import ru.alekseev.myapplication.data.dto.ClaudeMessageContent
 import ru.alekseev.myapplication.data.dto.ClaudeRequest
 import ru.alekseev.myapplication.data.dto.ClaudeResponse
+import ru.alekseev.myapplication.domain.observability.ConversationMetricsCollector
+import kotlin.system.measureTimeMillis
 
 /**
  * Orchestrates multi-turn conversations with Claude API.
@@ -16,9 +18,11 @@ import ru.alekseev.myapplication.data.dto.ClaudeResponse
  * - Detecting and handling tool_use stop reasons
  * - Executing tools via MCP
  * - Building conversation history with tool results
+ * - Recording metrics for tool execution and performance
  */
 class ConversationOrchestrator(
-    private val mcpManager: MCPManager
+    private val mcpManager: MCPManager,
+    private val conversationMetrics: ConversationMetricsCollector
 ) {
     /**
      * Execute a multi-turn conversation with tool use support.
@@ -107,7 +111,12 @@ class ConversationOrchestrator(
                 println("[ConversationOrchestrator] [${index + 1}/${toolUses.size}] Calling tool: $toolName")
                 println("[ConversationOrchestrator] Tool input: $toolInput")
 
-                val result = mcpManager.callTool(toolName, toolInput)
+                // Measure tool execution time
+                var result: String
+                val toolDuration = measureTimeMillis {
+                    result = mcpManager.callTool(toolName, toolInput)
+                }
+
                 val truncatedResult = if (result.length > 200) {
                     "${result.take(200)}... (${result.length} chars total)"
                 } else {
@@ -115,6 +124,9 @@ class ConversationOrchestrator(
                 }
                 println("[ConversationOrchestrator] Tool $toolName completed successfully")
                 println("[ConversationOrchestrator] Tool result: $truncatedResult")
+
+                // Record successful tool call
+                conversationMetrics.recordToolCall(toolName, success = true, toolDuration, errorMessage = null)
 
                 toolResults.add(
                     ClaudeContent(
@@ -126,6 +138,10 @@ class ConversationOrchestrator(
             } catch (e: Exception) {
                 println("[ConversationOrchestrator] ERROR: Tool $toolName failed with error: ${e.message}")
                 e.printStackTrace()
+
+                // Record failed tool call
+                conversationMetrics.recordToolCall(toolName, success = false, 0, errorMessage = e.message)
+
                 toolResults.add(
                     ClaudeContent(
                         type = "tool_result",

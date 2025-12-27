@@ -2,7 +2,7 @@ package ru.alekseev.myapplication.feature.main.data.repository
 
 import ru.alekseev.myapplication.feature.main.data.mapper.toDomain
 import ru.alekseev.myapplication.feature.main.domain.entity.ChatMessageState
-import ru.alekseev.myapplication.feature.main.domain.repository.ChatRepository
+import ru.alekseev.myapplication.feature.main.domain.repository.ChatConnectionRepository
 import ru.alekseev.myapplication.feature.main.domain.usecase.DispatchAlertUseCase
 import ru.alekseev.myapplication.domain.entity.RagMode
 import kotlinx.coroutines.flow.Flow
@@ -10,10 +10,10 @@ import kotlinx.coroutines.flow.map
 import ru.alekseev.myapplication.data.datasource.ChatWebSocketDataSource
 import ru.alekseev.myapplication.data.dto.ChatResponseDto
 
-class ChatRepositoryImpl(
+class ChatConnectionRepositoryImpl(
     private val webSocketDataSource: ChatWebSocketDataSource,
     private val dispatchAlertUseCase: DispatchAlertUseCase,
-) : ChatRepository {
+) : ChatConnectionRepository {
 
     override suspend fun sendMessage(message: String, ragMode: RagMode) {
         webSocketDataSource.sendMessage(message, ragMode)

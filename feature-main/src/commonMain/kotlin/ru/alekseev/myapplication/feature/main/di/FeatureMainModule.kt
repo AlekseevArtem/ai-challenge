@@ -1,7 +1,7 @@
 package ru.alekseev.myapplication.feature.main.di
 
-import ru.alekseev.myapplication.feature.main.data.repository.ChatRepositoryImpl
-import ru.alekseev.myapplication.feature.main.domain.repository.ChatRepository
+import ru.alekseev.myapplication.feature.main.data.repository.ChatConnectionRepositoryImpl
+import ru.alekseev.myapplication.feature.main.domain.repository.ChatConnectionRepository
 import ru.alekseev.myapplication.feature.main.domain.usecase.ConnectToChatUseCase
 import ru.alekseev.myapplication.feature.main.domain.usecase.DispatchAlertUseCase
 import ru.alekseev.myapplication.feature.main.domain.usecase.ObserveMessagesUseCase
@@ -24,8 +24,8 @@ val featureMainModule = module {
     // Data Source from shared
     singleOf(::ChatWebSocketDataSourceImpl) bind ChatWebSocketDataSource::class
 
-    // Repository
-    singleOf(::ChatRepositoryImpl) bind ChatRepository::class
+    // Repository (WebSocket connection management)
+    singleOf(::ChatConnectionRepositoryImpl) bind ChatConnectionRepository::class
 
     // Use Cases
     factoryOf(::SendMessageUseCase)
