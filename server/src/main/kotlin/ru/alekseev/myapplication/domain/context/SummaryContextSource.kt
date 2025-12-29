@@ -1,5 +1,6 @@
 package ru.alekseev.myapplication.domain.context
 
+import ru.alekseev.myapplication.core.common.ClaudeRoles
 import ru.alekseev.myapplication.data.dto.ClaudeMessage
 import ru.alekseev.myapplication.data.dto.ClaudeMessageContent
 import ru.alekseev.myapplication.domain.entity.RagMode
@@ -36,13 +37,13 @@ class SummaryContextSource(
 
         messages.add(
             ClaudeMessage(
-                role = "user",
+                role = ClaudeRoles.USER,
                 content = ClaudeMessageContent.Text(summaryContext)
             )
         )
         messages.add(
             ClaudeMessage(
-                role = "assistant",
+                role = ClaudeRoles.ASSISTANT,
                 content = ClaudeMessageContent.Text("I understand the context from previous conversations.")
             )
         )

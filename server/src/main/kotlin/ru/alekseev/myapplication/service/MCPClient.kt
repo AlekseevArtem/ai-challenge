@@ -5,6 +5,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import ru.alekseev.myapplication.core.common.JsonFactory
 import ru.alekseev.myapplication.data.dto.*
 import java.io.BufferedReader
 import java.io.BufferedWriter
@@ -32,10 +33,7 @@ class MCPClient(
     private val requestIdCounter = AtomicInteger(0)
     private val mutex = Mutex()
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
+    private val json = JsonFactory.create()
 
     var isConnected = false
         private set

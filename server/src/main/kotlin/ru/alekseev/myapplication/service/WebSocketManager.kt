@@ -6,6 +6,7 @@ import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 import ru.alekseev.myapplication.data.dto.ChatResponseDto
 import ru.alekseev.myapplication.data.dto.UserAlertDto
+import ru.alekseev.myapplication.core.common.logTag
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -24,7 +25,7 @@ class WebSocketManager(
      */
     fun registerConnection(id: String, session: DefaultWebSocketSession) {
         connections[id] = session
-        System.err.println("[WebSocketManager] Connection registered: $id (Total: ${connections.size})")
+        System.err.println("$logTag Connection registered: $id (Total: ${connections.size})")
 
         // Start alert listener if this is the first connection
         if (connections.size == 1 && alertListenerJob == null) {
@@ -37,7 +38,7 @@ class WebSocketManager(
      */
     fun unregisterConnection(id: String) {
         connections.remove(id)
-        System.err.println("[WebSocketManager] Connection unregistered: $id (Total: ${connections.size})")
+        System.err.println("$logTag Connection unregistered: $id (Total: ${connections.size})")
 
         // Stop alert listener if no more connections
         if (connections.isEmpty()) {
@@ -49,15 +50,15 @@ class WebSocketManager(
      * Broadcast an alert to all connected clients
      */
     suspend fun broadcastAlert(alert: UserAlertDto) {
-        System.err.println("[WebSocketManager] Encoding alert: $alert")
+        System.err.println("$logTag Encoding alert: $alert")
 
         val message = json.encodeToString(
             ChatResponseDto.serializer(),
             ChatResponseDto.Alert(alert)
         )
 
-        System.err.println("[WebSocketManager] Encoded message: '$message'")
-        System.err.println("[WebSocketManager] Message length: ${message.length}")
+        System.err.println("$logTag Encoded message: '$message'")
+        System.err.println("$logTag Message length: ${message.length}")
 
         val frame = Frame.Text(message)
         val deadConnections = mutableListOf<String>()
@@ -65,9 +66,9 @@ class WebSocketManager(
         connections.forEach { (id, session) ->
             try {
                 session.send(frame)
-                System.err.println("[WebSocketManager] Alert sent to connection: $id")
+                System.err.println("$logTag Alert sent to connection: $id")
             } catch (e: Exception) {
-                System.err.println("[WebSocketManager] Failed to send alert to $id: ${e.message}")
+                System.err.println("$logTag Failed to send alert to $id: ${e.message}")
                 e.printStackTrace()
                 deadConnections.add(id)
             }
@@ -76,33 +77,33 @@ class WebSocketManager(
         // Remove dead connections
         deadConnections.forEach { unregisterConnection(it) }
 
-        System.err.println("[WebSocketManager] Alert broadcasted to ${connections.size} connections")
+        System.err.println("$logTag Alert broadcasted to ${connections.size} connections")
     }
 
     /**
      * Start listening to alerts from ReminderScheduler
      */
     private fun startAlertListener() {
-        System.err.println("[WebSocketManager] Starting alert listener...")
+        System.err.println("$logTag Starting alert listener...")
 
         alertListenerJob = scope.launch {
             reminderScheduler.alertFlow.collect { alert ->
-                System.err.println("[WebSocketManager] Received alert: ${alert.title}")
+                System.err.println("$logTag Received alert: ${alert.title}")
                 broadcastAlert(alert)
             }
         }
 
-        System.err.println("[WebSocketManager] Alert listener started")
+        System.err.println("$logTag Alert listener started")
     }
 
     /**
      * Stop listening to alerts
      */
     private fun stopAlertListener() {
-        System.err.println("[WebSocketManager] Stopping alert listener...")
+        System.err.println("$logTag Stopping alert listener...")
         alertListenerJob?.cancel()
         alertListenerJob = null
-        System.err.println("[WebSocketManager] Alert listener stopped")
+        System.err.println("$logTag Alert listener stopped")
     }
 
     /**
@@ -114,9 +115,9 @@ class WebSocketManager(
      * Close all connections
      */
     suspend fun closeAll() {
-        System.err.println("[WebSocketManager] Clearing all connections...")
+        System.err.println("$logTag Clearing all connections...")
         connections.clear()
         stopAlertListener()
-        System.err.println("[WebSocketManager] All connections cleared")
+        System.err.println("$logTag All connections cleared")
     }
 }

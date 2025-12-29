@@ -3,6 +3,7 @@ package ru.alekseev.indexer
 import kotlinx.coroutines.runBlocking
 import ru.alekseev.indexer.data.index.VectorIndex
 import ru.alekseev.indexer.data.ollama.OllamaClient
+import ru.alekseev.myapplication.core.common.RAGDefaults
 import java.io.File
 
 /**
@@ -19,7 +20,7 @@ fun main(args: Array<String>) {
     }
 
     val query = args.joinToString(" ")
-    val indexPath = "./faiss_index/project.index"
+    val indexPath = "${RAGDefaults.DEFAULT_INDEX_DIR}/${RAGDefaults.INDEX_FILENAME}"
 
     println("Searching index for: \"$query\"")
     println()

@@ -13,6 +13,8 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.put
 import ru.alekseev.mcp.MCPToolProvider
 import ru.alekseev.mcp.models.Tool
+import ru.alekseev.myapplication.core.common.JsonFactory
+import ru.alekseev.myapplication.core.common.logTag
 
 /**
  * Provides Google Calendar tools for MCP server
@@ -21,10 +23,7 @@ class CalendarToolProvider(
     private val calendarService: GoogleCalendarService
 ) : MCPToolProvider {
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
+    private val json = JsonFactory.create()
 
     override fun getTools(): List<Tool> = listOf(
         Tool(
@@ -166,42 +165,42 @@ class CalendarToolProvider(
     )
 
     override fun handleToolCall(toolName: String, arguments: JsonObject?): String {
-        System.err.println("[CalendarToolProvider] Calling tool: $toolName")
-        System.err.println("[CalendarToolProvider] Tool arguments: $arguments")
+        System.err.println("$logTag Calling tool: $toolName")
+        System.err.println("$logTag Tool arguments: $arguments")
 
         return when (toolName) {
             "list_events" -> {
                 val args = parseParams<ListEventsParams>(arguments) ?: ListEventsParams()
-                System.err.println("[CalendarToolProvider] list_events: maxResults=${args.maxResults}, calendarId=${args.calendarId}")
+                System.err.println("$logTag list_events: maxResults=${args.maxResults}, calendarId=${args.calendarId}")
                 calendarService.listEvents(args).also {
-                    System.err.println("[CalendarToolProvider] list_events completed successfully")
+                    System.err.println("$logTag list_events completed successfully")
                 }
             }
 
             "create_event" -> {
                 val args = parseParams<CreateEventParams>(arguments)
                     ?: throw IllegalArgumentException("Missing required arguments")
-                System.err.println("[CalendarToolProvider] create_event: summary=${args.summary}, start=${args.startDateTime}, end=${args.endDateTime}")
+                System.err.println("$logTag create_event: summary=${args.summary}, start=${args.startDateTime}, end=${args.endDateTime}")
                 calendarService.createEvent(args).also {
-                    System.err.println("[CalendarToolProvider] create_event completed successfully")
+                    System.err.println("$logTag create_event completed successfully")
                 }
             }
 
             "update_event" -> {
                 val args = parseParams<UpdateEventParams>(arguments)
                     ?: throw IllegalArgumentException("Missing required arguments")
-                System.err.println("[CalendarToolProvider] update_event: eventId=${args.eventId}")
+                System.err.println("$logTag update_event: eventId=${args.eventId}")
                 calendarService.updateEvent(args).also {
-                    System.err.println("[CalendarToolProvider] update_event completed successfully")
+                    System.err.println("$logTag update_event completed successfully")
                 }
             }
 
             "delete_event" -> {
                 val args = parseParams<DeleteEventParams>(arguments)
                     ?: throw IllegalArgumentException("Missing required arguments")
-                System.err.println("[CalendarToolProvider] delete_event: eventId=${args.eventId}, calendarId=${args.calendarId}")
+                System.err.println("$logTag delete_event: eventId=${args.eventId}, calendarId=${args.calendarId}")
                 calendarService.deleteEvent(args).also {
-                    System.err.println("[CalendarToolProvider] delete_event completed successfully")
+                    System.err.println("$logTag delete_event completed successfully")
                 }
             }
 

@@ -1,5 +1,8 @@
 package ru.alekseev.myapplication.config
 
+import ru.alekseev.myapplication.core.common.OllamaDefaults
+import ru.alekseev.myapplication.core.common.RAGDefaults
+
 /**
  * Configuration for RAG (Retrieval Augmented Generation) service.
  * Loads settings from environment variables with sensible defaults.
@@ -19,16 +22,16 @@ data class RAGConfig(
          * Falls back to defaults if environment variables are not set.
          */
         fun load(): RAGConfig {
-            val indexDir = System.getenv("RAG_INDEX_DIR") ?: "./faiss_index"
+            val indexDir = System.getenv("RAG_INDEX_DIR") ?: RAGDefaults.DEFAULT_INDEX_DIR
 
             return RAGConfig(
-                indexPath = System.getenv("RAG_INDEX_PATH") ?: "$indexDir/project.index",
-                metadataPath = System.getenv("RAG_METADATA_PATH") ?: "$indexDir/metadata.json",
-                ollamaUrl = System.getenv("OLLAMA_URL") ?: "http://host.docker.internal:11434",
-                embeddingModel = System.getenv("EMBEDDING_MODEL") ?: "nomic-embed-text",
-                topK = System.getenv("RAG_TOP_K")?.toIntOrNull() ?: 3,
-                chunkSize = System.getenv("RAG_CHUNK_SIZE")?.toIntOrNull() ?: 1024,
-                overlapSize = System.getenv("RAG_OVERLAP_SIZE")?.toIntOrNull() ?: 100
+                indexPath = System.getenv("RAG_INDEX_PATH") ?: "$indexDir/${RAGDefaults.INDEX_FILENAME}",
+                metadataPath = System.getenv("RAG_METADATA_PATH") ?: "$indexDir/${RAGDefaults.METADATA_FILENAME}",
+                ollamaUrl = System.getenv("OLLAMA_URL") ?: OllamaDefaults.DOCKER_BASE_URL,
+                embeddingModel = System.getenv("EMBEDDING_MODEL") ?: OllamaDefaults.EMBEDDING_MODEL,
+                topK = System.getenv("RAG_TOP_K")?.toIntOrNull() ?: RAGDefaults.DEFAULT_TOP_K,
+                chunkSize = System.getenv("RAG_CHUNK_SIZE")?.toIntOrNull() ?: RAGDefaults.DEFAULT_CHUNK_SIZE,
+                overlapSize = System.getenv("RAG_OVERLAP_SIZE")?.toIntOrNull() ?: RAGDefaults.DEFAULT_OVERLAP_SIZE
             )
         }
     }

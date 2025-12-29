@@ -2,6 +2,7 @@ package ru.alekseev.mcp.devops
 
 import kotlinx.serialization.json.*
 import ru.alekseev.mcp.devops.models.Tool
+import ru.alekseev.myapplication.core.common.logTag
 import java.io.File
 
 /**
@@ -94,7 +95,7 @@ class DevOpsToolProvider(
         val command = mutableListOf("./gradlew")
         command.addAll(tasks)
 
-        System.err.println("[DevOpsToolProvider] Running: ${command.joinToString(" ")}")
+        System.err.println("$logTag Running: ${command.joinToString(" ")}")
 
         val result = executeCommand(
             command,
@@ -144,7 +145,7 @@ class DevOpsToolProvider(
             throw Exception("No running emulator found. Please start an Android emulator first.\n\nADB output:\n${devicesResult.output}")
         }
 
-        System.err.println("[DevOpsToolProvider] Found ${runningDevices.size} device(s)")
+        System.err.println("$logTag Found ${runningDevices.size} device(s)")
 
         // Install APK
         val installResult = executeCommand(

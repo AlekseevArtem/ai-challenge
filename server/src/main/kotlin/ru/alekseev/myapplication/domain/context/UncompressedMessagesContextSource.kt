@@ -1,5 +1,6 @@
 package ru.alekseev.myapplication.domain.context
 
+import ru.alekseev.myapplication.core.common.ClaudeRoles
 import ru.alekseev.myapplication.data.dto.ClaudeMessage
 import ru.alekseev.myapplication.data.dto.ClaudeMessageContent
 import ru.alekseev.myapplication.domain.entity.RagMode
@@ -32,10 +33,10 @@ class UncompressedMessagesContextSource(
 
         uncompressedMessages.forEach { msg ->
             messages.add(
-                ClaudeMessage(role = "user", content = ClaudeMessageContent.Text(msg.userMessage))
+                ClaudeMessage(role = ClaudeRoles.USER, content = ClaudeMessageContent.Text(msg.userMessage))
             )
             messages.add(
-                ClaudeMessage(role = "assistant", content = ClaudeMessageContent.Text(msg.assistantMessage))
+                ClaudeMessage(role = ClaudeRoles.ASSISTANT, content = ClaudeMessageContent.Text(msg.assistantMessage))
             )
         }
 

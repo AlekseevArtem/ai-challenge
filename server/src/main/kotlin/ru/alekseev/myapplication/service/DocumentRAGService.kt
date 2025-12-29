@@ -9,6 +9,9 @@ import ru.alekseev.indexer.data.ollama.OllamaClient
 import ru.alekseev.indexer.domain.models.IndexMetadata
 import ru.alekseev.indexer.domain.pipeline.IndexingPipeline
 import ru.alekseev.myapplication.config.RAGConfig
+import ru.alekseev.myapplication.core.common.JsonFactory
+import ru.alekseev.myapplication.core.common.MCPDefaults
+import ru.alekseev.myapplication.core.common.logTag
 import ru.alekseev.myapplication.domain.gateway.DocumentRetriever
 import ru.alekseev.myapplication.domain.model.SearchResult
 import ru.alekseev.myapplication.domain.rag.ChunkRelevanceFilter
@@ -20,13 +23,13 @@ import java.io.File
  */
 class DocumentRAGService(
     private val config: RAGConfig,
-    private val mcpUrl: String = "http://localhost:8082"
+    private val mcpUrl: String = MCPDefaults.DEFAULT_BASE_URL
 ) : DocumentRetriever {
     private val indexPath: String = config.indexPath
     private val metadataPath: String = config.metadataPath
     private val vectorIndex = VectorIndex()
     private val ollamaClient = OllamaClient(config.ollamaUrl, config.embeddingModel)
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = JsonFactory.create()
 
     private var metadata: IndexMetadata? = null
     private var isIndexLoaded = false
@@ -40,10 +43,10 @@ class DocumentRAGService(
 
             if (indexFile.exists()) {
                 try {
-                    println("[DocumentRAGService] Loading index from ${indexFile.absolutePath}")
+                    println("$logTag Loading index from ${indexFile.absolutePath}")
                     vectorIndex.load(indexFile)
                     isIndexLoaded = true
-                    println("[DocumentRAGService] Index loaded successfully with ${vectorIndex.size()} vectors")
+                    println("$logTag Index loaded successfully with ${vectorIndex.size()} vectors")
 
                     // Load metadata
                     val metadataFile = File(metadataPath)
@@ -52,15 +55,15 @@ class DocumentRAGService(
                             IndexMetadata.serializer(),
                             metadataFile.readText()
                         )
-                        println("[DocumentRAGService] Metadata loaded: ${metadata?.totalChunks} chunks from ${metadata?.totalFiles} files")
+                        println("$logTag Metadata loaded: ${metadata?.totalChunks} chunks from ${metadata?.totalFiles} files")
                     }
                 } catch (e: Exception) {
-                    println("[DocumentRAGService] Warning: Failed to load index: ${e.message}")
+                    println("$logTag Warning: Failed to load index: ${e.message}")
                     isIndexLoaded = false
                 }
             } else {
-                println("[DocumentRAGService] Index not found at ${indexFile.absolutePath}")
-                println("[DocumentRAGService] You can create the index by calling reindex() or running the indexer manually")
+                println("$logTag Index not found at ${indexFile.absolutePath}")
+                println("$logTag You can create the index by calling reindex() or running the indexer manually")
                 isIndexLoaded = false
             }
         }
@@ -79,7 +82,7 @@ class DocumentRAGService(
         filter: ChunkRelevanceFilter?
     ): List<SearchResult> {
         if (!isIndexLoaded) {
-            println("[DocumentRAGService] Index not loaded, returning empty results")
+            println("$logTag Index not loaded, returning empty results")
             return emptyList()
         }
 
@@ -111,7 +114,7 @@ class DocumentRAGService(
                 // Apply filter if provided
                 filter?.filter(searchResults) ?: searchResults
             } catch (e: Exception) {
-                println("[DocumentRAGService] Search failed: ${e.message}")
+                println("$logTag Search failed: ${e.message}")
                 emptyList()
             }
         }

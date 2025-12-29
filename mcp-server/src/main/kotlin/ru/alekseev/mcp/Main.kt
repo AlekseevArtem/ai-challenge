@@ -8,6 +8,7 @@ import ru.alekseev.mcp.services.calendar.CalendarToolProvider
 import ru.alekseev.mcp.services.calendar.GoogleCalendarService
 import ru.alekseev.mcp.services.reminder.ReminderService
 import ru.alekseev.mcp.services.reminder.ReminderToolProvider
+import ru.alekseev.myapplication.core.common.JsonFactory
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
@@ -26,10 +27,7 @@ fun main() {
 
     // Create MCP server with all providers
     val server = MCPServer(toolProviders)
-    val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
+    val json = JsonFactory.create()
 
     val reader = BufferedReader(InputStreamReader(System.`in`))
 

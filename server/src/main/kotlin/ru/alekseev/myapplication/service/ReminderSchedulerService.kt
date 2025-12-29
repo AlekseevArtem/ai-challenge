@@ -3,6 +3,7 @@ package ru.alekseev.myapplication.service
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import ru.alekseev.myapplication.core.common.ClaudeRoles
 import ru.alekseev.myapplication.data.dto.AlertSeverityDto
 import ru.alekseev.myapplication.data.dto.UserAlertDto
 import java.util.UUID
@@ -83,7 +84,7 @@ class ReminderSchedulerService(
                 maxTokens = 1024,
                 messages = listOf(
                     ClaudeMessage(
-                        role = "user",
+                        role = ClaudeRoles.USER,
                         content = ClaudeMessageContent.Text(
                             "Пожалуйста, получи сводку по всем напоминаниям. " +
                             "Используй инструмент get_reminders_summary для получения информации. " +

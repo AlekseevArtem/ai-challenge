@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ru.alekseev.myapplication.core.common.RAGDefaults
 import ru.alekseev.myapplication.domain.entity.RagMode
 import ru.alekseev.myapplication.feature.settings.presentation.SettingsComponent
 import ru.alekseev.myapplication.feature.settings.presentation.SettingsIntent
@@ -170,7 +171,7 @@ fun SettingsContent(
                         // Enabled with filtering option
                         val currentThreshold = when (val mode = state.ragMode) {
                             is RagMode.EnabledWithFiltering -> mode.threshold
-                            else -> 0.4f
+                            else -> RAGDefaults.DEFAULT_THRESHOLD
                         }
 
                         var sliderThreshold by remember(currentThreshold) { mutableStateOf(currentThreshold) }

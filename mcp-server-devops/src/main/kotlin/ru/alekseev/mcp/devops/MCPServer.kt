@@ -5,6 +5,8 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import ru.alekseev.mcp.devops.models.*
+import ru.alekseev.myapplication.core.common.JsonFactory
+import ru.alekseev.myapplication.core.common.logTag
 
 /**
  * Main MCP Server class that handles JSONRPC protocol.
@@ -13,30 +15,27 @@ import ru.alekseev.mcp.devops.models.*
 class MCPServer(
     private val toolProviders: List<MCPToolProvider>
 ) {
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
+    private val json = JsonFactory.create()
 
     fun handleRequest(request: JSONRPCRequest): JSONRPCResponse {
-        System.err.println("[MCPServer] Handling request: method=${request.method}, id=${request.id}")
+        System.err.println("$logTag Handling request: method=${request.method}, id=${request.id}")
         return try {
             val response = when (request.method) {
                 "initialize" -> handleInitialize(request)
                 "tools/list" -> handleListTools(request)
                 "tools/call" -> handleCallTool(request)
                 else -> {
-                    System.err.println("[MCPServer] ERROR: Method not found: ${request.method}")
+                    System.err.println("$logTag ERROR: Method not found: ${request.method}")
                     JSONRPCResponse(
                         id = request.id,
                         error = JSONRPCError(-32601, "Method not found: ${request.method}")
                     )
                 }
             }
-            System.err.println("[MCPServer] Successfully handled request: method=${request.method}")
+            System.err.println("$logTag Successfully handled request: method=${request.method}")
             response
         } catch (e: Exception) {
-            System.err.println("[MCPServer] ERROR: Internal error handling request: ${e.message}")
+            System.err.println("$logTag ERROR: Internal error handling request: ${e.message}")
             e.printStackTrace(System.err)
             JSONRPCResponse(
                 id = request.id,
@@ -46,7 +45,7 @@ class MCPServer(
     }
 
     private fun handleInitialize(request: JSONRPCRequest): JSONRPCResponse {
-        System.err.println("[MCPServer] Initializing server...")
+        System.err.println("$logTag Initializing server...")
         val result = InitializeResult(
             serverInfo = ServerInfo(
                 name = "devops-mcp",
@@ -56,7 +55,7 @@ class MCPServer(
                 tools = buildJsonObject { }
             )
         )
-        System.err.println("[MCPServer] Server initialized: name=devops-mcp, version=1.0.0")
+        System.err.println("$logTag Server initialized: name=devops-mcp, version=1.0.0")
 
         return JSONRPCResponse(
             id = request.id,
@@ -65,12 +64,12 @@ class MCPServer(
     }
 
     private fun handleListTools(request: JSONRPCRequest): JSONRPCResponse {
-        System.err.println("[MCPServer] Listing available tools...")
+        System.err.println("$logTag Listing available tools...")
 
         // Collect all tools from all providers
         val tools = toolProviders.flatMap { it.getTools() }
 
-        System.err.println("[MCPServer] Found ${tools.size} tools: ${tools.map { it.name }}")
+        System.err.println("$logTag Found ${tools.size} tools: ${tools.map { it.name }}")
 
         val result = ListToolsResult(tools)
         return JSONRPCResponse(
@@ -83,15 +82,15 @@ class MCPServer(
         val params = request.params?.let {
             json.decodeFromJsonElement<CallToolParams>(it)
         } ?: run {
-            System.err.println("[MCPServer] ERROR: Invalid params in tool call")
+            System.err.println("$logTag ERROR: Invalid params in tool call")
             return JSONRPCResponse(
                 id = request.id,
                 error = JSONRPCError(-32602, "Invalid params")
             )
         }
 
-        System.err.println("[MCPServer] Calling tool: ${params.name}")
-        System.err.println("[MCPServer] Tool arguments: ${params.arguments}")
+        System.err.println("$logTag Calling tool: ${params.name}")
+        System.err.println("$logTag Tool arguments: ${params.arguments}")
 
         val resultText = try {
             // Find the provider that supports this tool
@@ -101,7 +100,7 @@ class MCPServer(
             // Delegate to the provider
             provider.handleToolCall(params.name, params.arguments)
         } catch (e: Exception) {
-            System.err.println("[MCPServer] ERROR: Tool call failed: ${e.message}")
+            System.err.println("$logTag ERROR: Tool call failed: ${e.message}")
             e.printStackTrace(System.err)
             return JSONRPCResponse(
                 id = request.id,

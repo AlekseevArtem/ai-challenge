@@ -8,19 +8,18 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.*
+import ru.alekseev.myapplication.core.common.JsonFactory
+import ru.alekseev.myapplication.core.common.MCPDefaults
 
 /**
  * Client for communicating with the MCP server
  */
 class MCPClient(
-    private val baseUrl: String = "http://localhost:8082"
+    private val baseUrl: String = MCPDefaults.DEFAULT_BASE_URL
 ) {
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                encodeDefaults = true
-            })
+            json(JsonFactory.create())
         }
     }
 
@@ -68,7 +67,7 @@ class MCPClient(
             }
         }
 
-        val response: JsonObject = client.post("$baseUrl/mcp") {
+        val response: JsonObject = client.post("$baseUrl${ru.alekseev.myapplication.core.common.ApiEndpoints.MCP}") {
             contentType(ContentType.Application.Json)
             setBody(requestBody)
         }.body()

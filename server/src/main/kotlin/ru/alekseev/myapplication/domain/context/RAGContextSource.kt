@@ -1,5 +1,6 @@
 package ru.alekseev.myapplication.domain.context
 
+import ru.alekseev.myapplication.core.common.ClaudeRoles
 import ru.alekseev.myapplication.data.dto.ClaudeMessage
 import ru.alekseev.myapplication.data.dto.ClaudeMessageContent
 import ru.alekseev.myapplication.domain.entity.RagMode
@@ -7,6 +8,7 @@ import ru.alekseev.myapplication.domain.gateway.DocumentRetriever
 import ru.alekseev.myapplication.domain.model.UserId
 import ru.alekseev.myapplication.domain.observability.RAGMetricsCollector
 import ru.alekseev.myapplication.domain.rag.SimilarityThresholdFilter
+import ru.alekseev.myapplication.core.common.logTag
 import ru.alekseev.myapplication.usecase.FormatRAGContextUseCase
 import kotlin.system.measureTimeMillis
 
@@ -44,12 +46,12 @@ class RAGContextSource(
             is RagMode.Enabled -> {
                 // RAG without filtering
                 if (!documentRetriever.isReady()) {
-                    println("[RAGContextSource] Document retriever not ready, skipping RAG")
+                    println("$logTag Document retriever not ready, skipping RAG")
                     ragMetrics.recordSkipped("Document retriever not ready")
                     return emptyList()
                 }
 
-                println("[RAGContextSource] RAG enabled without filtering")
+                println("$logTag RAG enabled without filtering")
 
                 // Measure retrieval time
                 var searchResults: List<ru.alekseev.myapplication.domain.model.SearchResult>
@@ -70,11 +72,11 @@ class RAGContextSource(
 
                 return listOf(
                     ClaudeMessage(
-                        role = "user",
+                        role = ClaudeRoles.USER,
                         content = ClaudeMessageContent.Text(ragContext)
                     ),
                     ClaudeMessage(
-                        role = "assistant",
+                        role = ClaudeRoles.ASSISTANT,
                         content = ClaudeMessageContent.Text("I understand. I'll use this context from the project codebase to answer your question.")
                     )
                 )
@@ -82,12 +84,12 @@ class RAGContextSource(
             is RagMode.EnabledWithFiltering -> {
                 // RAG with similarity threshold filtering
                 if (!documentRetriever.isReady()) {
-                    println("[RAGContextSource] Document retriever not ready, skipping RAG")
+                    println("$logTag Document retriever not ready, skipping RAG")
                     ragMetrics.recordSkipped("Document retriever not ready")
                     return emptyList()
                 }
 
-                println("[RAGContextSource] RAG enabled with filtering (threshold: ${ragMode.threshold})")
+                println("$logTag RAG enabled with filtering (threshold: ${ragMode.threshold})")
                 val filter = SimilarityThresholdFilter(ragMode.threshold)
 
                 // Measure retrieval time
@@ -101,7 +103,7 @@ class RAGContextSource(
                 val ragContext = formatRAGContextUseCase(searchResults)
 
                 if (ragContext.isBlank()) {
-                    println("[RAGContextSource] No chunks passed the similarity threshold, proceeding without RAG context")
+                    println("$logTag No chunks passed the similarity threshold, proceeding without RAG context")
                     ragMetrics.recordSkipped("No results passed similarity threshold ${ragMode.threshold}")
                     return emptyList()
                 }
@@ -110,11 +112,11 @@ class RAGContextSource(
 
                 return listOf(
                     ClaudeMessage(
-                        role = "user",
+                        role = ClaudeRoles.USER,
                         content = ClaudeMessageContent.Text(ragContext)
                     ),
                     ClaudeMessage(
-                        role = "assistant",
+                        role = ClaudeRoles.ASSISTANT,
                         content = ClaudeMessageContent.Text("I understand. I'll use this filtered context from the project codebase to answer your question.")
                     )
                 )

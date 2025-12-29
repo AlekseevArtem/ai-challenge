@@ -1,5 +1,6 @@
 package ru.alekseev.myapplication.usecase
 
+import ru.alekseev.myapplication.core.common.ClaudeRoles
 import ru.alekseev.myapplication.data.dto.ClaudeMessage
 import ru.alekseev.myapplication.data.dto.ClaudeMessageContent
 import ru.alekseev.myapplication.domain.context.ContextSource
@@ -55,7 +56,7 @@ class MessageHistoryBuilder(
 
         // Add current user message
         messagesForApi.add(
-            ClaudeMessage(role = "user", content = ClaudeMessageContent.Text(currentMessage))
+            ClaudeMessage(role = ClaudeRoles.USER, content = ClaudeMessageContent.Text(currentMessage))
         )
 
         return messagesForApi

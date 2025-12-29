@@ -5,6 +5,7 @@ import Reminder
 import UpdateReminderParams
 import java.sql.Connection
 import java.sql.DriverManager
+import ru.alekseev.myapplication.core.common.logTag
 import java.sql.ResultSet
 import java.sql.Types
 import java.time.Instant
@@ -34,7 +35,7 @@ class ReminderService(private val dbPath: String = "reminders.db") {
             )
             """.trimIndent()
         )
-        System.err.println("[ReminderService] Database initialized at $dbPath")
+        System.err.println("$logTag Database initialized at $dbPath")
     }
 
 
@@ -58,7 +59,7 @@ class ReminderService(private val dbPath: String = "reminders.db") {
         val generatedKeys = statement.generatedKeys
         val id = if (generatedKeys.next()) generatedKeys.getLong(1) else -1
 
-        System.err.println("[ReminderService] Added reminder: id=$id, title=${params.title}")
+        System.err.println("$logTag Added reminder: id=$id, title=${params.title}")
         return "✓ Напоминание добавлено (ID: $id)\nЗаголовок: ${params.title}\nПриоритет: ${params.priority}"
     }
 
@@ -83,7 +84,7 @@ class ReminderService(private val dbPath: String = "reminders.db") {
             reminders.add(resultSet.toReminder())
         }
 
-        System.err.println("[ReminderService] Listed ${reminders.size} reminders")
+        System.err.println("$logTag Listed ${reminders.size} reminders")
 
         if (reminders.isEmpty()) {
             return "Нет напоминаний"
@@ -152,7 +153,7 @@ class ReminderService(private val dbPath: String = "reminders.db") {
             topTasks.add(topTasksResult.toReminder())
         }
 
-        System.err.println("[ReminderService] Generated summary: total=$total, completed=$completed, highPriority=$highPriority")
+        System.err.println("$logTag Generated summary: total=$total, completed=$completed, highPriority=$highPriority")
 
         return buildString {
             appendLine("📊 Сводка по напоминаниям")
@@ -194,10 +195,10 @@ class ReminderService(private val dbPath: String = "reminders.db") {
         val updated = statement.executeUpdate()
 
         return if (updated > 0) {
-            System.err.println("[ReminderService] Marked reminder $id as ${if (completed) "completed" else "uncompleted"}")
+            System.err.println("$logTag Marked reminder $id as ${if (completed) "completed" else "uncompleted"}")
             "✓ Напоминание ${if (completed) "выполнено" else "отмечено как невыполненное"} (ID: $id)"
         } else {
-            System.err.println("[ReminderService] Reminder $id not found")
+            System.err.println("$logTag Reminder $id not found")
             "✗ Напоминание с ID $id не найдено"
         }
     }
@@ -251,10 +252,10 @@ class ReminderService(private val dbPath: String = "reminders.db") {
         val updated = statement.executeUpdate()
 
         return if (updated > 0) {
-            System.err.println("[ReminderService] Updated reminder ${params.id}")
+            System.err.println("$logTag Updated reminder ${params.id}")
             "✓ Напоминание обновлено (ID: ${params.id})"
         } else {
-            System.err.println("[ReminderService] Reminder ${params.id} not found")
+            System.err.println("$logTag Reminder ${params.id} not found")
             "✗ Напоминание с ID ${params.id} не найдено"
         }
     }
@@ -268,10 +269,10 @@ class ReminderService(private val dbPath: String = "reminders.db") {
         val deleted = statement.executeUpdate()
 
         return if (deleted > 0) {
-            System.err.println("[ReminderService] Deleted reminder $id")
+            System.err.println("$logTag Deleted reminder $id")
             "✓ Напоминание удалено (ID: $id)"
         } else {
-            System.err.println("[ReminderService] Reminder $id not found")
+            System.err.println("$logTag Reminder $id not found")
             "✗ Напоминание с ID $id не найдено"
         }
     }
@@ -301,6 +302,6 @@ class ReminderService(private val dbPath: String = "reminders.db") {
 
     fun close() {
         connection?.close()
-        System.err.println("[ReminderService] Database connection closed")
+        System.err.println("$logTag Database connection closed")
     }
 }

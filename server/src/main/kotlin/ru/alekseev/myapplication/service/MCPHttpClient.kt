@@ -13,6 +13,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import ru.alekseev.myapplication.core.common.JsonFactory
 import ru.alekseev.myapplication.data.dto.*
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -30,10 +31,7 @@ class MCPHttpClient(
     private val requestIdCounter = AtomicInteger(0)
     private val mutex = Mutex()
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
+    private val json = JsonFactory.create()
 
     private val httpClient = HttpClient(CIO) {
         install(ContentNegotiation) {

@@ -1,5 +1,13 @@
 package ru.alekseev.myapplication.core.common
 
+/**
+ * Extension property to get a log tag based on the class name.
+ * Usage: println("$logTag Starting service...")
+ * Output: [ClassName] Starting service...
+ */
+val Any.logTag: String
+    get() = "[${this::class.simpleName ?: "Unknown"}]"
+
 // Порт сервера (внутренний)
 const val SERVER_PORT = 8080
 
@@ -9,9 +17,28 @@ const val SERVER_EXTERNAL_PORT = 8081
 // Platform-specific server host
 expect val SERVER_HOST: String
 
+/**
+ * Protocol prefixes for URLs
+ */
+object Protocols {
+    const val WS = "ws://"
+    const val HTTP = "http://"
+    const val HTTPS = "https://"
+}
+
+/**
+ * API endpoint paths
+ */
+object ApiEndpoints {
+    const val CHAT = "/chat"
+    const val MCP = "/mcp"
+    const val HEALTH = "/health"
+    const val OLLAMA_EMBEDDINGS = "/api/embeddings"
+}
+
 // WebSocket URL для подключения клиента
 val SERVER_WS_URL: String
-    get() = "ws://$SERVER_HOST:$SERVER_EXTERNAL_PORT/chat"
+    get() = "${Protocols.WS}$SERVER_HOST:$SERVER_EXTERNAL_PORT${ApiEndpoints.CHAT}"
 
 /**
  * Application-wide constants for the chat server
@@ -74,4 +101,54 @@ object ClaudePricing {
      * Divisor for converting token count to millions (for cost calculation)
      */
     const val TOKENS_PER_MILLION = 1_000_000.0
+}
+
+/**
+ * Claude API message role identifiers
+ */
+object ClaudeRoles {
+    const val USER = "user"
+    const val ASSISTANT = "assistant"
+    const val SYSTEM = "system"
+}
+
+/**
+ * Ollama service configuration defaults
+ */
+object OllamaDefaults {
+    const val DEFAULT_HOST = "localhost"
+    const val DEFAULT_PORT = 11434
+    const val DEFAULT_BASE_URL = "http://localhost:$DEFAULT_PORT"
+    const val DOCKER_HOST = "host.docker.internal"
+    const val DOCKER_BASE_URL = "http://$DOCKER_HOST:$DEFAULT_PORT"
+    const val EMBEDDING_MODEL = "nomic-embed-text"
+}
+
+/**
+ * MCP (Model Context Protocol) service defaults
+ */
+object MCPDefaults {
+    const val DEFAULT_PORT = 8082
+    const val DEFAULT_BASE_URL = "http://localhost:$DEFAULT_PORT"
+}
+
+/**
+ * RAG (Retrieval Augmented Generation) configuration defaults
+ */
+object RAGDefaults {
+    const val DEFAULT_INDEX_DIR = "./faiss_index"
+    const val INDEX_FILENAME = "project.index"
+    const val METADATA_FILENAME = "metadata.json"
+    const val DEFAULT_THRESHOLD = 0.4f
+    const val DEFAULT_TOP_K = 3
+    const val DEFAULT_CHUNK_SIZE = 1024
+    const val DEFAULT_OVERLAP_SIZE = 100
+}
+
+/**
+ * OAuth configuration constants
+ */
+object OAuthDefaults {
+    const val ACCESS_TYPE_OFFLINE = "offline"
+    const val CREDENTIAL_USER_ID = "user"
 }

@@ -8,21 +8,20 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import ru.alekseev.myapplication.core.common.OllamaDefaults
+import ru.alekseev.myapplication.core.common.ApiEndpoints
+import ru.alekseev.myapplication.core.common.JsonFactory
 
 /**
  * Client for Ollama API to generate embeddings
  */
 class OllamaClient(
-    private val baseUrl: String = "http://localhost:11434",
-    private val model: String = "nomic-embed-text"
+    private val baseUrl: String = OllamaDefaults.DEFAULT_BASE_URL,
+    private val model: String = OllamaDefaults.EMBEDDING_MODEL
 ) {
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                encodeDefaults = true
-            })
+            json(JsonFactory.create())
         }
     }
 
@@ -30,7 +29,7 @@ class OllamaClient(
      * Generate embedding for a single text
      */
     suspend fun embed(text: String): List<Float> {
-        val response: EmbeddingResponse = client.post("$baseUrl/api/embeddings") {
+        val response: EmbeddingResponse = client.post("$baseUrl${ApiEndpoints.OLLAMA_EMBEDDINGS}") {
             contentType(ContentType.Application.Json)
             setBody(
                 EmbeddingRequest(

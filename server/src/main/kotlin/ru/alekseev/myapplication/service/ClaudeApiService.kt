@@ -51,13 +51,13 @@ class ClaudeApiService(
     private var mcpInitialized = false
 
     private fun loadApiKey(): String {
-        println("[ClaudeApiService] Loading API key from environment...")
+        println("$logTag Loading API key from environment...")
         val key = System.getenv("ANTHROPIC_API_KEY")?.takeIf { it.isNotBlank() }
         if (key != null) {
-            println("[ClaudeApiService] API key loaded successfully (length: ${key.length})")
+            println("$logTag API key loaded successfully (length: ${key.length})")
             return key
         } else {
-            println("[ClaudeApiService] WARNING: API key not found or empty!")
+            println("$logTag WARNING: API key not found or empty!")
             return ""
         }
     }
@@ -67,22 +67,22 @@ class ClaudeApiService(
      */
     override suspend fun initialize() {
         if (!mcpInitialized) {
-            println("[ClaudeApiService] Initializing MCP connections...")
+            println("$logTag Initializing MCP connections...")
             try {
                 mcpManager.connectAll()
                 mcpInitialized = true
-                println("[ClaudeApiService] MCP Manager initialized successfully")
+                println("$logTag MCP Manager initialized successfully")
 
                 // Log available tools
                 val tools = mcpManager.getAllTools()
-                println("[ClaudeApiService] Available MCP tools (${tools.size}): ${tools.map { it.name }}")
+                println("$logTag Available MCP tools (${tools.size}): ${tools.map { it.name }}")
             } catch (e: Exception) {
-                println("[ClaudeApiService] ERROR: Failed to initialize MCP: ${e.message}")
+                println("$logTag ERROR: Failed to initialize MCP: ${e.message}")
                 e.printStackTrace()
                 throw e
             }
         } else {
-            println("[ClaudeApiService] MCP already initialized, skipping...")
+            println("$logTag MCP already initialized, skipping...")
         }
     }
 
@@ -90,13 +90,13 @@ class ClaudeApiService(
      * Get available MCP tools
      */
     suspend fun getMCPTools(): List<ClaudeTool> {
-        println("[ClaudeApiService] Getting MCP tools...")
+        println("$logTag Getting MCP tools...")
         if (!mcpInitialized) {
-            println("[ClaudeApiService] MCP not initialized, initializing now...")
+            println("$logTag MCP not initialized, initializing now...")
             initialize()
         }
         val tools = mcpManager.getAllTools()
-        println("[ClaudeApiService] Retrieved ${tools.size} MCP tools")
+        println("$logTag Retrieved ${tools.size} MCP tools")
         return tools
     }
 
@@ -119,25 +119,25 @@ class ClaudeApiService(
                     setBody(request)
                 }
 
-                println("[ClaudeApiService] Received HTTP response with status: ${httpResponse.status}")
+                println("$logTag Received HTTP response with status: ${httpResponse.status}")
 
                 // Check status code before parsing
                 when (httpResponse.status) {
                     HttpStatusCode.OK -> {
                         // Success - parse and return
                         val claudeResponse = httpResponse.body<ClaudeResponse>()
-                        println("[ClaudeApiService] Response parsed successfully")
-                        println("[ClaudeApiService] Response details: id=${claudeResponse.id}, model=${claudeResponse.model}, stop_reason=${claudeResponse.stopReason}")
-                        println("[ClaudeApiService] Response content blocks: ${claudeResponse.content?.size ?: 0}")
+                        println("$logTag Response parsed successfully")
+                        println("$logTag Response details: id=${claudeResponse.id}, model=${claudeResponse.model}, stop_reason=${claudeResponse.stopReason}")
+                        println("$logTag Response content blocks: ${claudeResponse.content?.size ?: 0}")
                         return claudeResponse
                     }
 
                     HttpStatusCode.TooManyRequests -> {
                         // Rate limit - retry with backoff
-                        println("[ClaudeApiService] Rate limit exceeded (429). Attempt $attempt/$maxRetries")
+                        println("$logTag Rate limit exceeded (429). Attempt $attempt/$maxRetries")
 
                         if (attempt >= maxRetries) {
-                            println("[ClaudeApiService] Max retries reached, throwing exception")
+                            println("$logTag Max retries reached, throwing exception")
                             throw GatewayException("Claude API", "Rate limit exceeded after $maxRetries attempts")
                         }
 
@@ -150,9 +150,9 @@ class ClaudeApiService(
                             (1L shl attempt) * 1000
                         }
 
-                        println("[ClaudeApiService] Waiting ${waitTimeMs / 1000}s before retry...")
+                        println("$logTag Waiting ${waitTimeMs / 1000}s before retry...")
                         delay(waitTimeMs)
-                        println("[ClaudeApiService] Retrying request...")
+                        println("$logTag Retrying request...")
                         continue
                     }
 
@@ -163,7 +163,7 @@ class ClaudeApiService(
                         } catch (e: Exception) {
                             "Unable to read error body"
                         }
-                        println("[ClaudeApiService] ERROR: HTTP ${httpResponse.status.value}: $errorBody")
+                        println("$logTag ERROR: HTTP ${httpResponse.status.value}: $errorBody")
                         throw GatewayException("Claude API", "Request failed with status ${httpResponse.status}: $errorBody")
                     }
                 }
@@ -174,10 +174,10 @@ class ClaudeApiService(
             } catch (e: ClientRequestException) {
                 // This shouldn't happen anymore since we check status above,
                 // but keep as fallback
-                println("[ClaudeApiService] ERROR: ClientRequestException: ${e.message}")
+                println("$logTag ERROR: ClientRequestException: ${e.message}")
                 throw GatewayException("Claude API", "HTTP request failed: ${e.message}", e)
             } catch (e: Exception) {
-                println("[ClaudeApiService] ERROR: Failed to call Claude API: ${e.message}")
+                println("$logTag ERROR: Failed to call Claude API: ${e.message}")
                 e.printStackTrace()
                 throw GatewayException("Claude API", "Unexpected error: ${e.message}", e)
             }
@@ -188,23 +188,23 @@ class ClaudeApiService(
      * Send a message to Claude API with MCP tools and handle tool calls
      */
     override suspend fun sendMessage(request: ClaudeRequest): ClaudeResponse {
-        println("[ClaudeApiService] sendMessage called")
-        println("[ClaudeApiService] Request details: model=${request.model}, max_tokens=${request.maxTokens}, messages=${request.messages.size}")
+        println("$logTag sendMessage called")
+        println("$logTag Request details: model=${request.model}, max_tokens=${request.maxTokens}, messages=${request.messages.size}")
 
         // Ensure MCP is initialized
         if (!mcpInitialized) {
-            println("[ClaudeApiService] MCP not initialized, initializing...")
+            println("$logTag MCP not initialized, initializing...")
             initialize()
         }
 
         // Add MCP tools to the request if not already present
         val requestWithTools = if (request.tools == null) {
-            println("[ClaudeApiService] Adding MCP tools to request...")
+            println("$logTag Adding MCP tools to request...")
             val mcpTools = mcpManager.getAllTools()
-            println("[ClaudeApiService] Added ${mcpTools.size} MCP tools to request")
+            println("$logTag Added ${mcpTools.size} MCP tools to request")
             request.copy(tools = mcpTools)
         } else {
-            println("[ClaudeApiService] Request already has ${request.tools?.size ?: 0} tools")
+            println("$logTag Request already has ${request.tools?.size ?: 0} tools")
             request
         }
 
@@ -215,8 +215,8 @@ class ClaudeApiService(
     }
 
     override fun close() {
-        println("[ClaudeApiService] Closing HTTP client...")
+        println("$logTag Closing HTTP client...")
         httpClient.close()
-        println("[ClaudeApiService] HTTP client closed")
+        println("$logTag HTTP client closed")
     }
 }

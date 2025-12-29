@@ -1,5 +1,6 @@
 package ru.alekseev.myapplication.service
 
+import ru.alekseev.myapplication.core.common.ClaudeRoles
 import ru.alekseev.myapplication.data.dto.ClaudeMessage
 import ru.alekseev.myapplication.data.dto.ClaudeMessageContent
 import ru.alekseev.myapplication.data.dto.ClaudeRequest
@@ -33,7 +34,7 @@ class SummarizationService(
         val request = ClaudeRequest(
             messages = listOf(
                 ClaudeMessage(
-                    role = "user",
+                    role = ClaudeRoles.USER,
                     content = ClaudeMessageContent.Text(summaryPrompt)
                 )
             )

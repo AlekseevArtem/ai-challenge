@@ -1,5 +1,7 @@
 package ru.alekseev.myapplication.service
 
+import ru.alekseev.myapplication.core.common.ClaudeRoles
+import ru.alekseev.myapplication.core.common.logTag
 import ru.alekseev.myapplication.data.dto.ClaudeContent
 import ru.alekseev.myapplication.data.dto.ClaudeMessage
 import ru.alekseev.myapplication.data.dto.ClaudeMessageContent
@@ -40,53 +42,53 @@ class ConversationOrchestrator(
         val conversationMessages = initialRequest.messages.toMutableList()
         var iterationCount = 0
 
-        println("[ConversationOrchestrator] Starting conversation loop...")
+        println("$logTag Starting conversation loop...")
 
         while (true) {
             iterationCount++
-            println("[ConversationOrchestrator] ===== Iteration $iterationCount =====")
-            println("[ConversationOrchestrator] Sending request to Claude API...")
-            println("[ConversationOrchestrator] Current conversation has ${conversationMessages.size} messages")
+            println("$logTag ===== Iteration $iterationCount =====")
+            println("$logTag Sending request to Claude API...")
+            println("$logTag Current conversation has ${conversationMessages.size} messages")
 
             val response = executeRequest(currentRequest)
 
             // Check if response contains tool_use
             val toolUses = response.content?.filter { it.type == "tool_use" } ?: emptyList()
-            println("[ConversationOrchestrator] Found ${toolUses.size} tool_use blocks in response")
+            println("$logTag Found ${toolUses.size} tool_use blocks in response")
 
             if (toolUses.isEmpty() || response.stopReason != "tool_use") {
                 // No tool calls, return the response
-                println("[ConversationOrchestrator] No more tool calls. Stop reason: ${response.stopReason}")
-                println("[ConversationOrchestrator] Returning final response after $iterationCount iteration(s)")
+                println("$logTag No more tool calls. Stop reason: ${response.stopReason}")
+                println("$logTag Returning final response after $iterationCount iteration(s)")
                 return response
             }
 
-            println("[ConversationOrchestrator] Processing ${toolUses.size} tool use(s): ${toolUses.map { it.name }}")
+            println("$logTag Processing ${toolUses.size} tool use(s): ${toolUses.map { it.name }}")
 
             // Add assistant's response to conversation
-            println("[ConversationOrchestrator] Adding assistant response to conversation history")
+            println("$logTag Adding assistant response to conversation history")
             conversationMessages.add(
                 ClaudeMessage(
-                    role = "assistant",
+                    role = ClaudeRoles.ASSISTANT,
                     content = ClaudeMessageContent.ContentBlocks(response.content ?: emptyList())
                 )
             )
 
             // Execute tool calls
-            println("[ConversationOrchestrator] Executing ${toolUses.size} tool call(s)...")
+            println("$logTag Executing ${toolUses.size} tool call(s)...")
             val toolResults = executeTools(toolUses)
 
             // Add tool results to conversation
-            println("[ConversationOrchestrator] Adding ${toolResults.size} tool result(s) to conversation")
+            println("$logTag Adding ${toolResults.size} tool result(s) to conversation")
             conversationMessages.add(
                 ClaudeMessage(
-                    role = "user",
+                    role = ClaudeRoles.USER,
                     content = ClaudeMessageContent.ContentBlocks(toolResults)
                 )
             )
 
             // Continue conversation with tool results
-            println("[ConversationOrchestrator] Continuing conversation with updated messages")
+            println("$logTag Continuing conversation with updated messages")
             currentRequest = currentRequest.copy(messages = conversationMessages)
         }
     }
@@ -103,13 +105,13 @@ class ConversationOrchestrator(
             val toolUseId = toolUse.id
 
             if (toolName == null || toolUseId == null) {
-                println("[ConversationOrchestrator] WARNING: Tool use ${index + 1} missing name or id, skipping")
+                println("$logTag WARNING: Tool use ${index + 1} missing name or id, skipping")
                 continue
             }
 
             try {
-                println("[ConversationOrchestrator] [${index + 1}/${toolUses.size}] Calling tool: $toolName")
-                println("[ConversationOrchestrator] Tool input: $toolInput")
+                println("$logTag [${index + 1}/${toolUses.size}] Calling tool: $toolName")
+                println("$logTag Tool input: $toolInput")
 
                 // Measure tool execution time
                 var result: String
@@ -122,8 +124,8 @@ class ConversationOrchestrator(
                 } else {
                     result
                 }
-                println("[ConversationOrchestrator] Tool $toolName completed successfully")
-                println("[ConversationOrchestrator] Tool result: $truncatedResult")
+                println("$logTag Tool $toolName completed successfully")
+                println("$logTag Tool result: $truncatedResult")
 
                 // Record successful tool call
                 conversationMetrics.recordToolCall(toolName, success = true, toolDuration, errorMessage = null)
@@ -136,7 +138,7 @@ class ConversationOrchestrator(
                     )
                 )
             } catch (e: Exception) {
-                println("[ConversationOrchestrator] ERROR: Tool $toolName failed with error: ${e.message}")
+                println("$logTag ERROR: Tool $toolName failed with error: ${e.message}")
                 e.printStackTrace()
 
                 // Record failed tool call

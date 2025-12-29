@@ -2,7 +2,6 @@ package ru.alekseev.mcp.services.reminder
 
 import AddReminderParams
 import UpdateReminderParams
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.booleanOrNull
@@ -15,18 +14,17 @@ import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.put
 import ru.alekseev.mcp.MCPToolProvider
 import ru.alekseev.mcp.models.Tool
+import ru.alekseev.myapplication.core.common.JsonFactory
+import ru.alekseev.myapplication.core.common.logTag
 
 /**
  * Provides Reminder tools for MCP server
  */
 class ReminderToolProvider(
-    private val reminderService: ReminderService
+    private val reminderService: ReminderService,
 ) : MCPToolProvider {
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
+    private val json = JsonFactory.create()
 
     override fun getTools(): List<Tool> = listOf(
         Tool(
@@ -45,7 +43,10 @@ class ReminderToolProvider(
                     })
                     put("priority", buildJsonObject {
                         put("type", "string")
-                        put("description", "Priority level: 'high', 'medium', or 'low' (default: 'medium')")
+                        put(
+                            "description",
+                            "Priority level: 'high', 'medium', or 'low' (default: 'medium')"
+                        )
                         put("enum", buildJsonArray {
                             add("high")
                             add("medium")
@@ -78,7 +79,10 @@ class ReminderToolProvider(
                 put("properties", buildJsonObject {
                     put("completed", buildJsonObject {
                         put("type", "boolean")
-                        put("description", "Filter by completion status. null = all, true = completed only, false = uncompleted only")
+                        put(
+                            "description",
+                            "Filter by completion status. null = all, true = completed only, false = uncompleted only"
+                        )
                     })
                     put("priority", buildJsonObject {
                         put("type", "string")
@@ -188,32 +192,32 @@ class ReminderToolProvider(
     )
 
     override fun handleToolCall(toolName: String, arguments: JsonObject?): String {
-        System.err.println("[ReminderToolProvider] Calling tool: $toolName")
-        System.err.println("[ReminderToolProvider] Tool arguments: $arguments")
+        System.err.println("$logTag Calling tool: $toolName")
+        System.err.println("$logTag Tool arguments: $arguments")
 
         return when (toolName) {
             "add_reminder" -> {
                 val args = parseParams<AddReminderParams>(arguments)
                     ?: throw IllegalArgumentException("Missing required arguments")
-                System.err.println("[ReminderToolProvider] add_reminder: title=${args.title}, priority=${args.priority}")
+                System.err.println("$logTag add_reminder: title=${args.title}, priority=${args.priority}")
                 reminderService.addReminder(args).also {
-                    System.err.println("[ReminderToolProvider] add_reminder completed successfully")
+                    System.err.println("$logTag add_reminder completed successfully")
                 }
             }
 
             "list_reminders" -> {
                 val completed = arguments?.get("completed")?.jsonPrimitive?.booleanOrNull
                 val priority = arguments?.get("priority")?.jsonPrimitive?.contentOrNull
-                System.err.println("[ReminderToolProvider] list_reminders: completed=$completed, priority=$priority")
+                System.err.println("$logTag list_reminders: completed=$completed, priority=$priority")
                 reminderService.listReminders(completed, priority).also {
-                    System.err.println("[ReminderToolProvider] list_reminders completed successfully")
+                    System.err.println("$logTag list_reminders completed successfully")
                 }
             }
 
             "get_reminders_summary" -> {
-                System.err.println("[ReminderToolProvider] get_reminders_summary")
+                System.err.println("$logTag get_reminders_summary")
                 reminderService.getSummary().also {
-                    System.err.println("[ReminderToolProvider] get_reminders_summary completed successfully")
+                    System.err.println("$logTag get_reminders_summary completed successfully")
                 }
             }
 
@@ -221,27 +225,27 @@ class ReminderToolProvider(
                 val id = arguments?.get("id")?.jsonPrimitive?.longOrNull
                     ?: throw IllegalArgumentException("id is required")
                 val completed = arguments?.get("completed")?.jsonPrimitive?.booleanOrNull ?: true
-                System.err.println("[ReminderToolProvider] mark_reminder_completed: id=$id, completed=$completed")
+                System.err.println("$logTag mark_reminder_completed: id=$id, completed=$completed")
                 reminderService.markCompleted(id, completed).also {
-                    System.err.println("[ReminderToolProvider] mark_reminder_completed completed successfully")
+                    System.err.println("$logTag mark_reminder_completed completed successfully")
                 }
             }
 
             "update_reminder" -> {
                 val args = parseParams<UpdateReminderParams>(arguments)
                     ?: throw IllegalArgumentException("Missing required arguments")
-                System.err.println("[ReminderToolProvider] update_reminder: id=${args.id}")
+                System.err.println("$logTag update_reminder: id=${args.id}")
                 reminderService.updateReminder(args).also {
-                    System.err.println("[ReminderToolProvider] update_reminder completed successfully")
+                    System.err.println("$logTag update_reminder completed successfully")
                 }
             }
 
             "delete_reminder" -> {
                 val id = arguments?.get("id")?.jsonPrimitive?.longOrNull
                     ?: throw IllegalArgumentException("id is required")
-                System.err.println("[ReminderToolProvider] delete_reminder: id=$id")
+                System.err.println("$logTag delete_reminder: id=$id")
                 reminderService.deleteReminder(id).also {
-                    System.err.println("[ReminderToolProvider] delete_reminder completed successfully")
+                    System.err.println("$logTag delete_reminder completed successfully")
                 }
             }
 

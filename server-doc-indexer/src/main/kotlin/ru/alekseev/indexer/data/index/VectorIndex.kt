@@ -3,6 +3,7 @@ package ru.alekseev.indexer.data.index
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import ru.alekseev.indexer.domain.models.DocumentChunk
+import ru.alekseev.myapplication.core.common.JsonFactory
 import java.io.File
 import kotlin.math.sqrt
 
@@ -12,10 +13,7 @@ import kotlin.math.sqrt
  */
 class VectorIndex {
     private val vectors = mutableListOf<IndexedVector>()
-    private val json = Json {
-        prettyPrint = true
-        encodeDefaults = true
-    }
+    private val json = JsonFactory.create()
 
     /**
      * Add a document chunk with its embedding to the index

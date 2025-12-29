@@ -12,6 +12,9 @@ import ru.alekseev.indexer.domain.crawler.FileCrawler
 import ru.alekseev.indexer.domain.models.ChunkMetadata
 import ru.alekseev.indexer.domain.models.DocumentChunk
 import ru.alekseev.indexer.domain.models.IndexMetadata
+import ru.alekseev.myapplication.core.common.JsonFactory
+import ru.alekseev.myapplication.core.common.OllamaDefaults
+import ru.alekseev.myapplication.core.common.RAGDefaults
 import java.io.File
 import java.time.Instant
 import java.util.*
@@ -23,14 +26,14 @@ import java.util.*
 class IndexingPipeline(
     private val mcpClient: MCPClient,
     private val ollamaClient: OllamaClient,
-    private val outputDir: String = "./faiss_index",
+    private val outputDir: String = RAGDefaults.DEFAULT_INDEX_DIR,
     private val chunkSize: Int = 1024,
     private val overlapSize: Int = 100
 ) {
     private val textChunker = TextChunker(chunkSize, overlapSize)
     private val fileCrawler = FileCrawler(mcpClient)
     private val vectorIndex = VectorIndex()
-    private val json = Json { prettyPrint = true }
+    private val json = JsonFactory.create()
 
     /**
      * Run the complete indexing pipeline
@@ -105,12 +108,12 @@ class IndexingPipeline(
         val outputDirFile = File(outputDir)
         outputDirFile.mkdirs()
 
-        val indexFile = File(outputDirFile, "project.index")
+        val indexFile = File(outputDirFile, RAGDefaults.INDEX_FILENAME)
         vectorIndex.save(indexFile)
         println("Index saved to: ${indexFile.absolutePath}")
 
         // Save metadata
-        val metadataFile = File(outputDirFile, "metadata.json")
+        val metadataFile = File(outputDirFile, RAGDefaults.METADATA_FILENAME)
         val metadata = IndexMetadata(
             chunks = chunksWithEmbeddings.map {
                 ChunkMetadata(
@@ -127,7 +130,7 @@ class IndexingPipeline(
             indexedAt = Instant.now().toString(),
             chunkSize = chunkSize,
             overlapSize = overlapSize,
-            embeddingModel = "nomic-embed-text"
+            embeddingModel = OllamaDefaults.EMBEDDING_MODEL
         )
 
         metadataFile.writeText(json.encodeToString(metadata))

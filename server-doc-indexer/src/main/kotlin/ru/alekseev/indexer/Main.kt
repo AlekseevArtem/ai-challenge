@@ -4,26 +4,20 @@ import kotlinx.coroutines.runBlocking
 import ru.alekseev.indexer.data.mcp.MCPClient
 import ru.alekseev.indexer.data.ollama.OllamaClient
 import ru.alekseev.indexer.domain.pipeline.IndexingPipeline
+import ru.alekseev.myapplication.core.common.MCPDefaults
+import ru.alekseev.myapplication.core.common.OllamaDefaults
+import ru.alekseev.myapplication.core.common.RAGDefaults
 
 /**
  * Main entry point for the document indexing application.
  *
  * Usage:
  *   ./gradlew :server-doc-indexer:run
- *
- * Prerequisites:
- *   1. MCP server must be running on http://localhost:8082
- *   2. Ollama must be running on http://localhost:11434
- *   3. nomic-embed-text model must be pulled in Ollama
- *
- * Output:
- *   - ./faiss_index/project.index (vector index)
- *   - ./faiss_index/metadata.json (chunk metadata)
  */
 fun main(args: Array<String>) {
-    val mcpUrl = args.getOrNull(0) ?: "http://localhost:8082"
-    val ollamaUrl = args.getOrNull(1) ?: "http://localhost:11434"
-    val outputDir = args.getOrNull(2) ?: "./faiss_index"
+    val mcpUrl = args.getOrNull(0) ?: MCPDefaults.DEFAULT_BASE_URL
+    val ollamaUrl = args.getOrNull(1) ?: OllamaDefaults.DEFAULT_BASE_URL
+    val outputDir = args.getOrNull(2) ?: RAGDefaults.DEFAULT_INDEX_DIR
 
     val currentDir = System.getProperty("user.dir")
 
@@ -36,7 +30,7 @@ fun main(args: Array<String>) {
     println()
 
     val mcpClient = MCPClient(mcpUrl)
-    val ollamaClient = OllamaClient(ollamaUrl, "nomic-embed-text")
+    val ollamaClient = OllamaClient(ollamaUrl, OllamaDefaults.EMBEDDING_MODEL)
 
     try {
         runBlocking {
@@ -58,7 +52,7 @@ fun main(args: Array<String>) {
             } catch (e: Exception) {
                 println("✗ Ollama server is not reachable: ${e.message}")
                 println("  Please ensure Ollama is running and the model is pulled:")
-                println("  ollama pull nomic-embed-text")
+                println("  ollama pull ${OllamaDefaults.EMBEDDING_MODEL}")
                 return@runBlocking
             }
 

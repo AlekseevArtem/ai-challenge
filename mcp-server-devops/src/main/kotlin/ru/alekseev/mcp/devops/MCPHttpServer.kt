@@ -12,6 +12,8 @@ import kotlinx.serialization.json.Json
 import ru.alekseev.mcp.devops.models.JSONRPCRequest
 import ru.alekseev.mcp.devops.models.JSONRPCResponse
 import ru.alekseev.mcp.devops.models.JSONRPCError
+import ru.alekseev.myapplication.core.common.JsonFactory
+import ru.alekseev.myapplication.core.common.logTag
 
 /**
  * HTTP server wrapper for MCP Server.
@@ -19,12 +21,9 @@ import ru.alekseev.mcp.devops.models.JSONRPCError
  */
 class MCPHttpServer(
     private val mcpServer: MCPServer,
-    private val port: Int = 8082
+    private val port: Int = ServerDefaults.DEFAULT_PORT
 ) {
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
+    private val json = JsonFactory.create()
 
     fun start() {
         embeddedServer(Netty, port = port) {
@@ -34,21 +33,21 @@ class MCPHttpServer(
 
             routing {
                 // Health check endpoint
-                get("/health") {
+                get(ApiEndpoints.HEALTH) {
                     call.respondText("OK")
                 }
 
                 // MCP JSON-RPC endpoint
-                post("/mcp") {
+                post(ApiEndpoints.MCP) {
                     try {
                         val request = call.receive<JSONRPCRequest>()
-                        System.err.println("[MCPHttpServer] Received request: method=${request.method}, id=${request.id}")
+                        System.err.println("$logTag Received request: method=${request.method}, id=${request.id}")
 
                         val response = mcpServer.handleRequest(request)
 
                         call.respond(response)
                     } catch (e: Exception) {
-                        System.err.println("[MCPHttpServer] Error handling request: ${e.message}")
+                        System.err.println("$logTag Error handling request: ${e.message}")
                         e.printStackTrace(System.err)
                         call.respond(
                             JSONRPCResponse(

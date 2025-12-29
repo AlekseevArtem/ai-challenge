@@ -9,6 +9,7 @@ import io.ktor.websocket.readText
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.json.Json
 import org.koin.java.KoinJavaComponent.inject
+import ru.alekseev.myapplication.core.common.ApiEndpoints
 import ru.alekseev.myapplication.core.common.ChatConstants
 import ru.alekseev.myapplication.data.dto.*
 import ru.alekseev.myapplication.domain.entity.RagMode
@@ -20,6 +21,7 @@ import ru.alekseev.myapplication.mapper.toMessagePairDtos
 import ru.alekseev.myapplication.usecase.HandleSummarizationUseCase
 import ru.alekseev.myapplication.usecase.LoadChatHistoryUseCase
 import ru.alekseev.myapplication.usecase.ProcessUserMessageUseCase
+import ru.alekseev.myapplication.core.common.logTag
 import ru.alekseev.myapplication.service.WebSocketManager
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -41,7 +43,7 @@ fun Route.chatRouting() {
     val processUserMessageUseCase: ProcessUserMessageUseCase by inject(ProcessUserMessageUseCase::class.java)
     val webSocketManager: WebSocketManager by inject(WebSocketManager::class.java)
 
-    webSocket("/chat") {
+    webSocket(ApiEndpoints.CHAT) {
         val userId = UserId(ChatConstants.DEFAULT_USER_ID)
         val connectionId = Uuid.random().toString()
 
@@ -121,7 +123,7 @@ fun Route.chatRouting() {
 
                     } catch (e: ValidationException) {
                         // Client sent invalid data
-                        println("[ChatRouting] Validation error: ${e.message}")
+                        println("$logTag Validation error: ${e.message}")
                         send(
                             Frame.Text(
                                 json.encodeToString(
@@ -132,7 +134,7 @@ fun Route.chatRouting() {
                         )
                     } catch (e: GatewayException) {
                         // External service (Claude API, RAG) failed
-                        println("[ChatRouting] Gateway error: ${e.message}")
+                        println("$logTag Gateway error: ${e.message}")
                         e.printStackTrace()
                         send(
                             Frame.Text(
@@ -144,7 +146,7 @@ fun Route.chatRouting() {
                         )
                     } catch (e: DomainException) {
                         // Other domain errors
-                        println("[ChatRouting] Domain error: ${e.message}")
+                        println("$logTag Domain error: ${e.message}")
                         e.printStackTrace()
                         send(
                             Frame.Text(
@@ -156,7 +158,7 @@ fun Route.chatRouting() {
                         )
                     } catch (e: Exception) {
                         // Unexpected infrastructure errors
-                        println("[ChatRouting] Unexpected error: ${e.message}")
+                        println("$logTag Unexpected error: ${e.message}")
                         e.printStackTrace()
                         send(
                             Frame.Text(

@@ -28,6 +28,8 @@ kotlin {
 }
 
 dependencies {
+    implementation(projects.coreCommon)
+
     // Serialization
     implementation(libs.serialization.json)
 
