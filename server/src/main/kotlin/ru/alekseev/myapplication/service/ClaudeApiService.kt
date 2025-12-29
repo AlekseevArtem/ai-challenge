@@ -1,6 +1,7 @@
 package ru.alekseev.myapplication.service
 
 import io.ktor.client.HttpClient
+import ru.alekseev.myapplication.core.common.logTag
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.ClientRequestException

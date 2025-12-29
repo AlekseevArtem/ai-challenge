@@ -88,6 +88,12 @@ class ChatRepositoryImpl(
             queries.getAllSummaries(userId.value).executeAsList().toDomain()
         }
 
+    override suspend fun deleteAllSummaries(userId: UserId) {
+        withContext(Dispatchers.IO) {
+            queries.deleteAllSummaries(userId.value)
+        }
+    }
+
     override suspend fun getMessageById(id: MessageId): Message? = withContext(Dispatchers.IO) {
         queries.getMessageById(id.value).executeAsOneOrNull()?.toDomain()
     }

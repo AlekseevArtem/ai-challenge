@@ -58,6 +58,12 @@ interface ChatRepository {
     suspend fun getAllSummaries(userId: UserId = UserId.DEFAULT): List<Summary>
 
     /**
+     * Delete all summaries for a user.
+     * Used when replacing old summaries with a new cumulative one.
+     */
+    suspend fun deleteAllSummaries(userId: UserId = UserId.DEFAULT)
+
+    /**
      * Get a message by ID (domain entity).
      */
     suspend fun getMessageById(id: MessageId): Message?

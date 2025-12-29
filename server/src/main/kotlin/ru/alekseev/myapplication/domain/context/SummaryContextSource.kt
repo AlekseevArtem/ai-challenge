@@ -8,10 +8,17 @@ import ru.alekseev.myapplication.domain.model.UserId
 import ru.alekseev.myapplication.repository.ChatRepository
 
 /**
- * Provides conversation summaries as context.
+ * Provides conversation summary as context.
  *
- * Summaries represent compressed historical conversations that help maintain
- * long-term context without excessive token usage.
+ * This source provides a SINGLE cumulative summary that represents the entire
+ * conversation history up to the most recent summarization point.
+ *
+ * The summary is structured with sections:
+ * - PROJECT CONTEXT: Key facts about the project
+ * - CURRENT GOALS: What the user is trying to achieve
+ * - DECISIONS MADE: Important technical decisions
+ * - IMPORTANT CONSTRAINTS: Limitations and requirements
+ * - OPEN QUESTIONS / TODO: Unresolved issues and pending tasks
  *
  * Format: User message with summary text + Assistant acknowledgment
  */
@@ -25,20 +32,19 @@ class SummaryContextSource(
     ): List<ClaudeMessage> {
         val summaries = chatRepository.getAllSummaries(userId)
 
-        if (summaries.isEmpty()) {
+        // Since we maintain only ONE cumulative summary, get the latest (and only) one
+        val latestSummary = summaries.lastOrNull()
+
+        if (latestSummary == null) {
             return emptyList()
         }
 
         val messages = mutableListOf<ClaudeMessage>()
 
-        val summaryContext = summaries.joinToString("\n\n") {
-            "Previous conversation summary: ${it.summaryText}"
-        }
-
         messages.add(
             ClaudeMessage(
                 role = ClaudeRoles.USER,
-                content = ClaudeMessageContent.Text(summaryContext)
+                content = ClaudeMessageContent.Text("Here is the summary of our previous conversation:\n\n${latestSummary.summaryText}")
             )
         )
         messages.add(

@@ -10,7 +10,10 @@ class SummarizationService(
     private val claudeGateway: ClaudeGateway,
 ) {
 
-    suspend fun createSummary(messages: List<Pair<String, String>>): String {
+    suspend fun createSummary(
+        messages: List<Pair<String, String>>,
+        previousSummary: String? = null
+    ): String {
 
         val conversationText = messages.mapIndexed { index, (userMsg, assistantMsg) ->
             """
@@ -20,16 +23,48 @@ class SummarizationService(
             """.trimIndent()
         }.joinToString("\n\n")
 
-        val summaryPrompt = """
-            Please provide a concise summary of the following conversation.
-            Focus on key facts, decisions, and context that would be important for continuing the conversation.
-            Keep the summary brief but informative.
+        val summaryPrompt = buildString {
+            appendLine("You are summarizing a conversation to maintain context efficiently.")
+            appendLine()
 
-            Conversation:
-            $conversationText
+            if (previousSummary != null) {
+                appendLine("PREVIOUS SUMMARY:")
+                appendLine(previousSummary)
+                appendLine()
+                appendLine("NEW MESSAGES SINCE LAST SUMMARY:")
+            } else {
+                appendLine("CONVERSATION MESSAGES:")
+            }
 
-            Summary:
-        """.trimIndent()
+            appendLine(conversationText)
+            appendLine()
+            appendLine("Please create a SINGLE cumulative summary that:")
+            if (previousSummary != null) {
+                appendLine("- Integrates information from the PREVIOUS SUMMARY")
+                appendLine("- Incorporates NEW MESSAGES")
+                appendLine("- Updates or replaces outdated information from previous summary")
+            } else {
+                appendLine("- Captures all important information from the conversation")
+            }
+            appendLine("- Uses this EXACT structure:")
+            appendLine()
+            appendLine("PROJECT CONTEXT:")
+            appendLine("- [Key facts about the project, codebase, technologies used]")
+            appendLine()
+            appendLine("CURRENT GOALS:")
+            appendLine("- [What the user is trying to achieve]")
+            appendLine()
+            appendLine("DECISIONS MADE:")
+            appendLine("- [Important technical decisions, architectural choices]")
+            appendLine()
+            appendLine("IMPORTANT CONSTRAINTS:")
+            appendLine("- [Limitations, requirements, things to avoid]")
+            appendLine()
+            appendLine("OPEN QUESTIONS / TODO:")
+            appendLine("- [Unresolved issues, pending tasks]")
+            appendLine()
+            appendLine("IMPORTANT: This summary will REPLACE all previous summaries. Include ALL relevant context.")
+        }.trimIndent()
 
         val request = ClaudeRequest(
             messages = listOf(
